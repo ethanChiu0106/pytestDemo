@@ -1,0 +1,90 @@
+"""
+產生與使用者「登入」功能相關的測試資料。
+"""
+
+from dataclasses import dataclass
+
+from faker import Faker
+
+from utils.config_loader import get_config
+
+from ..common import expectations
+from ..common.base import AllureCase, TestCaseData
+from ..common.enums import AllureSeverity, PytestMark
+from ..common.helpers import create_param_from_case, generate_accounts
+
+# 初始化 Faker
+fake = Faker('zh_TW')
+
+
+@dataclass
+class LoginRequest:
+    """登入 API 的請求資料"""
+
+    account: str
+    password: str
+
+
+@dataclass
+class LoginCase(AllureCase, TestCaseData[LoginRequest]):
+    """登入 API 的測試案例"""
+
+    parent_suite: str = 'API 測試'
+    suite: str = '登入'
+    epic: str = '使用者相關功能'
+    feature: str = '登入功能'
+
+
+def generate_login_cases() -> list:
+    """
+    產生登入 API 的測試情境。
+    """
+    secrets = get_config()
+    default_user = secrets['users']['default_user']
+
+    cases = [
+        create_param_from_case(
+            LoginCase(
+                severity=AllureSeverity.CRITICAL,
+                story='正向情境 - 使用者成功登入',
+                sub_suite='登入 - 成功',
+                title='登入成功',
+                description='輸入正確的帳號密碼測試是否可以登入',
+                request=LoginRequest(
+                    account=default_user['account'],
+                    password=default_user['password'],
+                ),
+                expected=expectations.SUCCESS_EXPECTED,
+                marks=[PytestMark.POSITIVE, PytestMark.SINGLE],
+            ),
+            id='login_success',
+        ),
+        create_param_from_case(
+            LoginCase(
+                severity=AllureSeverity.CRITICAL,
+                story='反向情境 - 帳號錯誤',
+                sub_suite='登入 - 失敗',
+                title='帳號有誤',
+                description='輸入一個不存在的隨機帳號',
+                request=LoginRequest(account=generate_accounts(1)[0], password='password1'),
+                expected=expectations.LOGIN_ACCOUNT_ERROR_EXPECTED,
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+            ),
+            id='incorrect_account',
+        ),
+        create_param_from_case(
+            LoginCase(
+                severity=AllureSeverity.CRITICAL,
+                story='反向情境 - 密碼錯誤',
+                sub_suite='登入 - 失敗',
+                title='密碼有誤',
+                description='輸入正確帳號，但隨機產生錯誤密碼',
+                request=LoginRequest(account=default_user['account'], password=fake.password()),
+                expected=expectations.LOGIN_PASSWORD_ERROR_EXPECTED,
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+            ),
+            id='incorrect_password',
+        ),
+    ]
+
+    return cases
