@@ -28,12 +28,15 @@ from utils.read_data import ReadFileData
 fake = Faker('zh_TW')
 
 # 設定基本日誌
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    stream=sys.stdout,
-)
+# 僅當沒有任何 handler 時才設定，以避免與 pytest 的日誌設定衝突
+if not logging.getLogger().hasHandlers():
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        stream=sys.stdout,
+    )
 
+logger = logging.getLogger(__name__)
 
 # ----------------- Helper Functions -----------------
 
@@ -47,16 +50,16 @@ def register_account(user_api: UserAPI, account: str, password: str) -> bool:
     :param password: 帳號的密碼。
     :return: 如果註冊成功返回 True，否則返回 False。
     """
-    logging.info(f'嘗試註冊帳號: {account}')
+    logger.info(f'嘗試註冊帳號: {account}')
     result = user_api.register(account, password)
 
     if result.get('status_code') == 200:
-        logging.info(f'成功註冊帳號: {account}')
+        logger.info(f'成功註冊帳號: {account}')
         print(f'成功註冊帳號: {account}, 密碼: {password}')
         return True
     else:
         error_message = result.get('err_msg', '未知錯誤')
-        logging.error(f'註冊帳號失敗: {account}. 原因: {error_message}')
+        logger.error(f'註冊帳號失敗: {account}. 原因: {error_message}')
         return False
 
 
@@ -68,10 +71,10 @@ def generate_and_register_accounts(user_api: UserAPI, num_accounts: int):
     :param num_accounts: 要建立的帳號數量。
     """
     if num_accounts <= 0:
-        logging.warning('帳號數量必須為正數。')
+        logger.warning('帳號數量必須為正數。')
         return
 
-    logging.info(f'開始為 {num_accounts} 個帳號進行批次註冊...')
+    logger.info(f'開始為 {num_accounts} 個帳號進行批次註冊...')
     successful_registrations = 0
     for i in range(num_accounts):
         # 產生符合格式的隨機帳號和密碼
@@ -82,12 +85,12 @@ def generate_and_register_accounts(user_api: UserAPI, num_accounts: int):
 
         password = 'qa11111'
 
-        logging.info(f'--- 帳號 {i + 1}/{num_accounts} ---')
+        logger.info(f'--- 帳號 {i + 1}/{num_accounts} ---')
         if register_account(user_api, new_account, password):
             successful_registrations += 1
 
-    logging.info('--- 批次註冊完成 ---')
-    logging.info(f'成功註冊 {successful_registrations}/{num_accounts} 個帳號。')
+    logger.info('--- 批次註冊完成 ---')
+    logger.info(f'成功註冊 {successful_registrations}/{num_accounts} 個帳號。')
 
 
 # ----------------- Main Execution Block -----------------
@@ -112,7 +115,7 @@ def main():
     )
     args = parser.parse_args()
 
-    logging.info(f"在 '{args.env}' 環境上執行腳本。")
+    logger.info(f"在 '{args.env}' 環境上執行腳本。")
 
     # --- API Client 設定 ---
     try:
@@ -120,13 +123,13 @@ def main():
         base_url = api_config[args.env]
         user_api = UserAPI(base_url=base_url)
     except KeyError:
-        logging.error(f"在 config/config.yml 中找不到環境 '{args.env}'。正在中止。")
+        logger.error(f"在 config/config.yml 中找不到環境 '{args.env}'。正在中止。")
         return
     except FileNotFoundError:
-        logging.error('找不到 config/config.yml。請確保從專案根目錄執行腳本。正在中止。')
+        logger.error('找不到 config/config.yml。請確保從專案根目錄執行腳本。正在中止。')
         return
     except Exception as e:
-        logging.error(f'設定過程中發生未預期的錯誤: {e}')
+        logger.error(f'設定過程中發生未預期的錯誤: {e}')
         return
 
     # --- 執行註冊 ---

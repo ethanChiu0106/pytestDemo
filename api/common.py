@@ -3,6 +3,8 @@ import logging
 
 import msgpack
 
+logger = logging.getLogger(__name__)
+
 
 class Common:
     def __init__(self) -> None:
@@ -29,5 +31,5 @@ class Common:
 
         c2s_data = {k: v for k, v in dict_data.items() if v is not None}
         log_level = logging.DEBUG if c2s_data['op_code'] == 1 else logging.INFO
-        logging.log(log_level, 'Send => %s', c2s_data)
+        logger.log(log_level, 'Send => %s', c2s_data)
         return self.__pack_msg(c2s_data)

@@ -1,6 +1,7 @@
 import logging
 from typing import Any, Dict
 
+logger = logging.getLogger(__name__)
 
 def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]):
     """
@@ -20,7 +21,7 @@ def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]
     if not expected_keys.issubset(actual_keys):
         missing_keys = expected_keys - actual_keys
         error_msg = f'驗證失敗：實際結果中缺少預期的鍵 (Missing keys in actual result): {missing_keys}'
-        logging.error(error_msg)
+        logger.error(error_msg)
         # 直接觸發斷言失敗，並顯示清晰的錯誤訊息
         assert False, error_msg
 
@@ -30,7 +31,7 @@ def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]
     filtered_expected = {key: expected_result[key] for key in common_keys}
 
     if filtered_actual != filtered_expected:
-        logging.error(
+        logger.error(
             f'比對失敗！\n實際結果 (僅比對共同欄位): {filtered_actual}\n預期結果 (僅比對共同欄位): {filtered_expected}'
         )
 

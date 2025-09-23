@@ -5,6 +5,8 @@ import requests
 
 from utils.result_base import ResultBase
 
+logger = logging.getLogger(__name__)
+
 
 class BaseRequest:
     def __init__(self, base_url, session=None):
@@ -54,7 +56,7 @@ class BaseRequest:
             self.request_log(url, method, data=data, json=json, **kwargs)
             return self.session.request(method, url, data=data, json=json, **kwargs)
         except requests.RequestException as e:
-            logging.error(f"Request failed: {e}")
+            logger.error(f"Request failed: {e}")
             raise
 
     @staticmethod
@@ -67,22 +69,22 @@ class BaseRequest:
         method (str): Request method
         **kwargs: 其他參數，如 headers、params、data、json、files 等
         """
-        logging.info('API URL => %s', url)
-        logging.info('Method => %s', method)
+        logger.info('API URL => %s', url)
+        logger.info('Method => %s', method)
         for key, value in kwargs.items():
             if value is None:
                 continue
-            logging.info('Request %s => %s', key, value)
+            logger.info('Request %s => %s', key, value)
 
     @staticmethod
     def save_response_log(response):
         if response is None:
-            logging.error('No response received')
+            logger.error('No response received')
             return
-        logging.info('Request headers => %s', response.request.headers)
-        logging.info('Response headers => %s', response.headers)
+        logger.info('Request headers => %s', response.request.headers)
+        logger.info('Response headers => %s', response.headers)
         try:
             response_data = response.json()
-            logging.info('Response => %s', response_data)
+            logger.info('Response => %s', response_data)
         except ValueError:
-            logging.info('Response => %s', response.text)
+            logger.info('Response => %s', response.text)

@@ -9,6 +9,8 @@ import websockets
 from api.ping import Ping
 from utils.result_base import ResultBase
 
+logger = logging.getLogger(__name__)
+
 
 class AsyncBaseWS:
     """
@@ -70,16 +72,16 @@ class AsyncBaseWS:
 
                 # 如果是 Pong 回應，直接印出和記錄，不放入佇列
                 if data.get('op_code') == 2:
-                    logging.info(f'Received pong: {data}')
+                    logger.info(f'Received pong: {data}')
                 else:
                     # 其他所有訊息都放入主佇列
                     await self.message_queue.put(data)
         except websockets.exceptions.ConnectionClosed:
-            logging.info('監聽任務停止：連線已關閉。')
+            logger.info('監聽任務停止：連線已關閉。')
         except asyncio.CancelledError:
-            logging.info('監聽任務已被取消。')
+            logger.info('監聽任務已被取消。')
         except Exception as e:
-            logging.error(f'監聽任務發生錯誤: {e}', exc_info=True)
+            logger.error(f'監聽任務發生錯誤: {e}', exc_info=True)
 
     async def send_msg(self, content: bytes):
         """
@@ -87,11 +89,11 @@ class AsyncBaseWS:
 
         :param content: 要發送的訊息內容 (bytes)。
         """
-        logging.debug('msgpack data => %s', content)
+        logger.debug('msgpack data => %s', content)
         if self._websocket and not self._websocket.closed:
             await self._websocket.send(content)
         else:
-            logging.warning('WebSocket 尚未連線或已關閉，無法發送訊息。')
+            logger.warning('WebSocket 尚未連線或已關閉，無法發送訊息。')
 
     async def send_and_receive(self, msg_content: bytes, expected_op_code: int, timeout: int = 5) -> dict:
         """
@@ -102,9 +104,9 @@ class AsyncBaseWS:
         :param timeout: 等待回應的超時時間（秒）。
         :return: 收到的符合條件的回應訊息，或在超時/錯誤時返回錯誤訊息。
         """
-        logging.debug('msgpack data => %s', msg_content)
+        logger.debug('msgpack data => %s', msg_content)
         if not (self._websocket and not self._websocket.closed):
-            logging.error('WebSocket 尚未連線或已關閉。')
+            logger.error('WebSocket 尚未連線或已關閉。')
             return {'status_code': 500, 'message': 'WebSocket not connected'}
 
         await self._websocket.send(msg_content)
@@ -117,18 +119,18 @@ class AsyncBaseWS:
                     data = await self.message_queue.get()
                     # 檢查 op_code 是否是我們期望的
                     if data.get('op_code') == expected_op_code:
-                        logging.info('Receive (Expected) => %s', data)
+                        logger.info('Receive (Expected) => %s', data)
                         result = ResultBase(data).get_result()
                         return result
                     else:
                         # 如果不是期望的訊息，則視為非預期訊息
                         print(f'Received (Unexpected) => {data}')
-                        logging.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, data)
+                        logger.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, data)
                         # 將它存入另一個佇列，以備後續處理或檢查
                         await self.unsolicited_messages.put(data)
 
         except TimeoutError:
-            logging.error('超時：在 %s 秒內未收到期望的 op_code %s。', timeout, expected_op_code)
+            logger.error('超時：在 %s 秒內未收到期望的 op_code %s。', timeout, expected_op_code)
             return {'status_code': 408, 'message': f'Timeout waiting for op_code {expected_op_code}'}
 
     async def receive_msg(self) -> dict:
@@ -141,11 +143,11 @@ class AsyncBaseWS:
         if self._websocket and not self._websocket.closed:
             # 直接從佇列中取出訊息
             data = await self.message_queue.get()
-            logging.info('Receive => %s', data)
+            logger.info('Receive => %s', data)
             result = ResultBase(data).get_result()
             return result
         else:
-            logging.error('WebSocket 尚未連線或已關閉，無法接收訊息。')
+            logger.error('WebSocket 尚未連線或已關閉，無法接收訊息。')
             return {'status_code': 500, 'message': 'WebSocket not connected'}
 
     async def wait_for_message(self, expected_op_code: int, timeout: int = 5) -> dict:
@@ -158,7 +160,7 @@ class AsyncBaseWS:
         :return: 收到的符合條件的回應訊息，或在超時/錯誤時返回錯誤訊息。
         """
         if not (self._websocket and not self._websocket.closed):
-            logging.error('WebSocket 尚未連線或已關閉。')
+            logger.error('WebSocket 尚未連線或已關閉。')
             return {'status_code': 500, 'message': 'WebSocket not connected'}
 
         try:
@@ -170,17 +172,17 @@ class AsyncBaseWS:
 
                     # 檢查 op_code 是否是我們期望的
                     if data.get('op_code') == expected_op_code:
-                        logging.info('Receive (Expected) => %s', data)
+                        logger.info('Receive (Expected) => %s', data)
                         result = ResultBase(data).get_result()
                         return result
                     else:
                         # 如果不是期望的訊息，則視為非預期訊息
-                        logging.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, data)
+                        logger.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, data)
                         # 將它存入另一個佇列，以備後續處理或檢查
                         await self.unsolicited_messages.put(data)
 
         except TimeoutError:
-            logging.error('超時：在 %s 秒內未收到期望的 op_code %s。', timeout, expected_op_code)
+            logger.error('超時：在 %s 秒內未收到期望的 op_code %s。', timeout, expected_op_code)
             return {'status_code': 408, 'message': f'Timeout waiting for op_code {expected_op_code}'}
 
     @staticmethod
@@ -224,39 +226,39 @@ class AsyncBaseWS:
                 await self.send_msg(data)
                 await asyncio.sleep(7)  # 非同步等待7秒
         except asyncio.CancelledError:
-            logging.info('心跳任務已被取消。')
+            logger.info('心跳任務已被取消。')
         except websockets.exceptions.ConnectionClosed:
-            logging.info('心跳任務停止：連線已關閉。')
+            logger.info('心跳任務停止：連線已關閉。')
         except Exception as e:
-            logging.error(f'心跳任務發生錯誤: {e}', exc_info=True)
+            logger.error(f'心跳任務發生錯誤: {e}', exc_info=True)
 
     async def stop_listener(self):
         """
         停止背景的訊息監聽任務。
         """
         if self.listener_task and not self.listener_task.done():
-            logging.info('正在取消監聽任務...')
+            logger.info('正在取消監聽任務...')
             self.listener_task.cancel()  # 發出取消請求
             try:
                 await self.listener_task  # 等待任務確實完成取消(若成功取消會引發CancelledError)
             except asyncio.CancelledError:
-                logging.info('監聽任務已成功取消。')
+                logger.info('監聽任務已成功取消。')
         else:
-            logging.info('監聽任務未在執行或已完成。')
+            logger.info('監聽任務未在執行或已完成。')
 
     async def stop_polling(self):
         """
         停止背景的心跳任務。
         """
         if self.polling_task and not self.polling_task.done():
-            logging.info('正在取消心跳任務...')
+            logger.info('正在取消心跳任務...')
             self.polling_task.cancel()  # 發出取消請求
             try:
                 await self.polling_task  # 等待任務確實完成取消
             except asyncio.CancelledError:
-                logging.info('心跳任務已成功取消。')
+                logger.info('心跳任務已成功取消。')
         else:
-            logging.info('心跳任務未在執行或已完成。')
+            logger.info('心跳任務未在執行或已完成。')
 
     @allure.step('關閉 WebSocket 連線')
     async def close_connect(self):
@@ -268,6 +270,6 @@ class AsyncBaseWS:
         await self.stop_listener()
         if self._websocket and not self._websocket.closed:
             await self._websocket.close()
-            logging.info('WebSocket 連線已關閉。')
+            logger.info('WebSocket 連線已關閉。')
         else:
-            logging.info('WebSocket 已關閉或不存在。')
+            logger.info('WebSocket 已關閉或不存在。')

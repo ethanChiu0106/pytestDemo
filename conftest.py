@@ -15,6 +15,7 @@ from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
 from utils.config_loader import get_config, load_test_config
 
+logger = logging.getLogger(__name__)
 T = TypeVar('T')
 
 
@@ -40,21 +41,21 @@ def _create_user_helper(user_api: UserAPI, user_key: str):
     secrets = get_config()
     user_config = secrets.get('users', {}).get(user_key)
     if not user_config:
-        logging.info(f"\nWarning: 在 secrets.yml 中找不到 user key '{user_key}'，跳過建立。")
+        logger.info(f"\nWarning: 在 secrets.yml 中找不到 user key '{user_key}'，跳過建立。")
         return
 
     account = user_config['account']
     password = user_config['password']
-    logging.info(f"\nSetting up user '{account}' (from key: {user_key})...")
+    logger.info(f"\nSetting up user '{account}' (from key: {user_key})...")
 
     result = user_api.register(account, password)
 
     if result.get('code') == 0:
-        logging.info(f"User '{account}' created successfully.")
+        logger.info(f"User '{account}' created successfully.")
     elif result.get('code') == 2001:
-        logging.info(f"User '{account}' already exists.")
+        logger.info(f"User '{account}' already exists.")
     else:
-        logging.info(f"An error occurred during setup for user '{account}': {result}")
+        logger.info(f"An error occurred during setup for user '{account}': {result}")
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -62,7 +63,7 @@ def setup_default_user(user_api: UserAPI):
     """
     在所有測試開始前，自動建立預設的通用測試帳號。
     """
-    logging.info('開始建立預設帳號...')
+    logger.info('開始建立預設帳號...')
     _create_user_helper(user_api, 'default_user')
 
 
@@ -203,9 +204,9 @@ def allure_environment_setup(request: pytest.FixtureRequest, shared_used_urls: s
 
 @pytest.fixture
 def test_case_setup_and_teardown():
-    logging.info('*************** 開始執行測項 ***************')
+    logger.info('*************** 開始執行測項 ***************')
     yield
-    logging.info('*************** 結束執行測項 ***************')
+    logger.info('*************** 結束執行測項 ***************')
 
 
 def pytest_collection_modifyitems(items):

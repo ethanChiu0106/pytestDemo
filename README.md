@@ -25,7 +25,7 @@
 
 ## 使用工具
 
-*   **語言**：Python 3.11.13
+*   **語言**：Python 3.11.9
 *   **測試框架**：Pytest
 *   **環境與套件管理**：uv
 *   **WebSocket 客戶端**：websockets
@@ -34,8 +34,6 @@
 *   **數據壓縮**：gzip
 *   **測試報告**：Allure Report
 *   **Python 版本管理**：pyenv
-*   **虛擬環境管理**：venv
-*   **套件安裝**：pip
 
 ## 安裝與設定
 
@@ -56,8 +54,8 @@
 
 2.  **設定 Python 版本 (使用 pyenv)**：
     ```bash
-    pyenv install 3.11.13
-    pyenv local 3.11.13
+    pyenv install 3.11.9
+    pyenv local 3.11.9
     ```
     *注意：如果您沒有安裝 pyenv，請參考 pyenv 官方文檔進行安裝。*
 
@@ -67,7 +65,7 @@
     uv venv
 
     # 啟用虛擬環境 (Windows)
-    .\\.venv\\Scripts\\activate
+    .\.venv\Scripts\activate
 
     # 使用 uv 安裝套件
     uv pip install -r requirements.txt

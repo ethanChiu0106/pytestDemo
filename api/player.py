@@ -20,6 +20,6 @@ class Player(Common):
     async def get_player_info(self) -> dict:
         return await self._send_player_flow_request(C2SPlayerFlow.GetPlayerInfo)
 
-    async def change_name(self, name: str) -> dict:
+    async def update_name(self, name: str) -> dict:
         data = {'name': name}
         return await self._send_player_flow_request(C2SPlayerFlow.UpdateName, data=data)
