@@ -12,3 +12,4 @@ class OpCode(Enum):
 class C2SPlayerFlow(Enum):
     GetPlayerInfo = 1
     UpdateName = 2
+    BindPhone = 3
