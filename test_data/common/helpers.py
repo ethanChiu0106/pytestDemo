@@ -1,5 +1,5 @@
 """
-存放 auth 子套件中共享的輔助函式。
+存放測試資料生成等共享的輔助函式。
 """
 
 import random
@@ -31,14 +31,14 @@ def generate_accounts(num, min_len=5, max_len=20):
 
 def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.param:
     """
-    Converts a test case dataclass object into a pytest.param object,
-    dynamically attaching pytest and allure marks using type-safe enums.
+    將一個測試案例的 dataclass 物件轉換為 pytest.param 物件，
+    並使用型別安全的 Enum 動態地附加 pytest 和 allure 的標籤。
     """
     all_marks = []
 
-    # --- Process Pytest Marks ---
+    # --- 處理 Pytest 標籤 ---
     if hasattr(case, 'marks') and case.marks:
-        # This map links the PytestMark enum to the actual pytest.mark object.
+        # 這個字典將 PytestMark Enum 映射到實際的 pytest.mark 物件
         marks_map = {
             PytestMark.SKIP: pytest.mark.skip,
             PytestMark.WS: pytest.mark.ws,
@@ -51,9 +51,9 @@ def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.par
             if mark_obj:
                 all_marks.append(mark_obj)
 
-    # --- Process Allure Marks ---
+    # --- 處理 Allure 標籤 ---
     if isinstance(case, AllureCase):
-        # Handle standard allure tags like story, feature, etc.
+        # 處理標準的 allure 標籤，如 story, feature 等
         allure_tags_map = {
             'parent_suite': allure.parent_suite,
             'suite': allure.suite,
@@ -67,20 +67,10 @@ def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.par
             if value:
                 all_marks.append(allure_marker(value))
 
-        # Convert our custom AllureSeverity enum to the official allure.severity_level
         if hasattr(case, 'severity') and case.severity:
-            severity_map = {
-                AllureSeverity.BLOCKER: allure.severity_level.BLOCKER,
-                AllureSeverity.CRITICAL: allure.severity_level.CRITICAL,
-                AllureSeverity.NORMAL: allure.severity_level.NORMAL,
-                AllureSeverity.MINOR: allure.severity_level.MINOR,
-                AllureSeverity.TRIVIAL: allure.severity_level.TRIVIAL,
-            }
-            allure_severity_level = severity_map.get(case.severity)
-            if allure_severity_level:
-                all_marks.append(allure.severity(allure_severity_level))
+            all_marks.append(allure.severity(case.severity.value))
 
-    # Use the case's title or the provided id for the test case ID
+    # 使用案例的 title 或提供的 id 作為測試案例的 ID
     case_id = id or getattr(case, 'title', 'N/A')
 
     return pytest.param(case, marks=all_marks, id=case_id)

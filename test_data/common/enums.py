@@ -1,10 +1,11 @@
 from enum import Enum
+import allure
 
 
 class PytestMark(Enum):
     """
-    Defines all available Pytest marks.
-    Using an Enum ensures type safety and provides auto-completion.
+    定義所有可用的 Pytest mark。
+    使用 Enum 可以確保型別安全並提供自動完成功能。
     """
 
     WS = 'ws'
@@ -16,12 +17,12 @@ class PytestMark(Enum):
 
 class AllureSeverity(Enum):
     """
-    Defines all available Allure severity levels.
-    This provides a layer of abstraction and type safety for test case definitions.
+    定義所有可用的 Allure 嚴重級別。
+    其值直接對應 allure.severity_level，以提供型別安全和集中管理。
     """
 
-    BLOCKER = 'blocker'
-    CRITICAL = 'critical'
-    NORMAL = 'normal'
-    MINOR = 'minor'
-    TRIVIAL = 'trivial'
+    BLOCKER = allure.severity_level.BLOCKER
+    CRITICAL = allure.severity_level.CRITICAL
+    NORMAL = allure.severity_level.NORMAL
+    MINOR = allure.severity_level.MINOR
+    TRIVIAL = allure.severity_level.TRIVIAL

@@ -6,9 +6,9 @@ from dataclasses import dataclass
 
 from faker import Faker
 
-from ..common import expectations
 from ..common.base import AllureCase, TestCaseData
 from ..common.enums import AllureSeverity, PytestMark
+from ..common.expectations import Auth
 from ..common.helpers import create_param_from_case, generate_accounts
 
 fake = Faker('zh_TW')
@@ -26,7 +26,7 @@ class RegisterRequest:
 class RegisterCase(AllureCase, TestCaseData[RegisterRequest]):
     """註冊 API 的測試案例"""
 
-    parent_suite: str = 'API 測試'
+    parent_suite: str = 'REST API 測試'
     suite: str = '註冊'
     epic: str = '使用者相關功能'
     feature: str = '註冊功能'
@@ -61,7 +61,7 @@ def generate_register_cases() -> list:
             'description': '帳號5~20英數, 密碼7~20英數',
             'account': valid_account,
             'password': valid_password,
-            'expected': expectations.REGISTER_SUCCESS_EXPECTED,
+            'expected': Auth.Register.SUCCESS,
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE],
         },
@@ -73,7 +73,7 @@ def generate_register_cases() -> list:
             'description': '帳號5碼',
             'account': account_5_chars,
             'password': password_7_chars,
-            'expected': expectations.REGISTER_SUCCESS_EXPECTED,
+            'expected': Auth.Register.SUCCESS,
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE],
         },
@@ -85,7 +85,7 @@ def generate_register_cases() -> list:
             'description': '帳號20碼',
             'account': account_20_chars,
             'password': account_20_chars,
-            'expected': expectations.REGISTER_SUCCESS_EXPECTED,
+            'expected': Auth.Register.SUCCESS,
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE],
         },
@@ -98,7 +98,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：使用已知的重複帳號',
             'account': valid_account,
             'password': valid_password,
-            'expected': expectations.REPEATED_ACCOUNT_EXPECTED,
+            'expected': Auth.Register.REPEATED_ACCOUNT,
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -110,7 +110,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：帳號長度超過20碼',
             'account': 'a' * 21,
             'password': 'aa123456',
-            'expected': expectations.ACCOUNT_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.ACCOUNT_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -122,7 +122,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：帳號長度不足5碼',
             'account': 'a' * 4,
             'password': 'aa123456',
-            'expected': expectations.ACCOUNT_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.ACCOUNT_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -134,7 +134,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：密碼長度6碼',
             'account': negative_test_account,
             'password': password_6_chars,
-            'expected': expectations.PASSWORD_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.PASSWORD_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -146,7 +146,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：密碼長度21碼',
             'account': negative_test_account,
             'password': password_21_chars,
-            'expected': expectations.PASSWORD_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.PASSWORD_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -158,7 +158,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：密碼全英',
             'account': negative_test_account,
             'password': password_all_eng,
-            'expected': expectations.PASSWORD_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.PASSWORD_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },
@@ -170,7 +170,7 @@ def generate_register_cases() -> list:
             'description': '反向測試：密碼全數',
             'account': negative_test_account,
             'password': password_all_num,
-            'expected': expectations.PASSWORD_FORMAT_ERROR_EXPECTED,
+            'expected': Auth.Validation.PASSWORD_FORMAT_ERROR,
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE],
         },

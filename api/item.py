@@ -1,11 +1,11 @@
+from base_ws_api import BaseWsApi
+from ws_constants import OpCode
+
 from api.service_names import Service
 from utils.base_request import BaseRequest
 
 
-class ItemAPI(BaseRequest):
-    """
-    API client for interacting with the Item resource.
-    """
+class Item(BaseRequest):
     service = Service.FRONT.value
 
     def __init__(self, base_url: str, session=None):
@@ -34,3 +34,13 @@ class ItemAPI(BaseRequest):
             json_data['description'] = description
         result = self.post('/items/', json=json_data)
         return result
+
+
+class ItemWs(BaseWsApi):
+    @property
+    def op_code(self) -> int:
+        return OpCode.C2SPlayerFlow.value
+
+    @property
+    def expected_op_code(self) -> int:
+        return OpCode.S2CPlayerFlow.value

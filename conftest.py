@@ -3,14 +3,15 @@ import platform
 import shutil
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, AsyncIterator, Type, TypeVar
+from typing import Any, AsyncIterator, Callable, Type, TypeVar
 
 import allure
 import pytest
 import pytest_asyncio
 import requests
 
-from api.user import UserAPI
+from api.auth import AuthAPI
+from test_data.common.expectations import Auth
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
 from utils.config_loader import get_config, load_test_config
@@ -36,43 +37,69 @@ def pytest_configure(config):
 # --- 核心 Fixtures ---
 
 
-def _create_user_helper(user_api: UserAPI, user_key: str):
-    """從設定檔建立一個使用者。"""
-    secrets = get_config()
-    user_config = secrets.get('users', {}).get(user_key)
-    if not user_config:
-        logger.info(f"\nWarning: 在 secrets.yml 中找不到 user key '{user_key}'，跳過建立。")
-        return
-
-    account = user_config['account']
-    password = user_config['password']
-    logger.info(f"\nSetting up user '{account}' (from key: {user_key})...")
-
-    result = user_api.register(account, password)
-
-    if result.get('code') == 0:
-        logger.info(f"User '{account}' created successfully.")
-    elif result.get('code') == 2001:
-        logger.info(f"User '{account}' already exists.")
-    else:
-        logger.info(f"An error occurred during setup for user '{account}': {result}")
-
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_default_user(user_api: UserAPI):
-    """
-    在所有測試開始前，自動建立預設的通用測試帳號。
-    """
-    logger.info('開始建立預設帳號...')
-    _create_user_helper(user_api, 'default_user')
+@pytest.fixture(scope='session')
+def test_config() -> dict:
+    """提供一個 session 範圍的設定資料。"""
+    return get_config()
 
 
 @pytest.fixture(scope='session')
-def setup_change_password_user(user_api: UserAPI):
+def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
     """
-    為變更密碼測試建立專用帳號，需要在測試中明確引用。
+    提供一個「使用者建立工廠」函式 (Fixture Factory Pattern)。
+
+    這個 fixture 將建立使用者所需的所有依賴 (auth_api, test_config) 包裝起來，
+    並回傳一個只需要傳入 `user_key` 的簡單函式。
+    這麼做是為了讓其他的 setup fixtures (如 setup_default_user) 變得更簡潔，
+    並將建立使用者的核心邏輯集中管理。
+
+    :return: 一個可呼叫的工廠函式，簽名為 `(user_key: str) -> None`。
     """
-    _create_user_helper(user_api, 'change_password_user')
+
+    def _creator(user_key: str):
+        user_config = test_config.get('users', {}).get(user_key)
+        if not user_config:
+            logger.warning(f"\nWarning: 在 secrets.yml 中找不到 user key '{user_key}'，跳過建立。")
+            return
+
+        account = user_config['account']
+        password = user_config['password']
+        logger.info(f"\n建立帳號 '{account}' (來自: {user_key})...")
+
+        result = auth_api.register(account, password)
+
+        if result.get('code') == Auth.Register.SUCCESS['code']:
+            logger.info(f"帳號 '{account}' 創建成功")
+        elif result.get('code') == Auth.Register.REPEATED_ACCOUNT['code']:
+            logger.info(f"帳號 '{account}' 已存在")
+        else:
+            logger.warning(f"建置帳號 '{account}' 時發生錯誤: {result}")
+
+    return _creator
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_default_user(user_creator: Callable[[str], None]):
+    """
+    一個 session 範圍且自動執行的 fixture。
+
+    它的作用是在所有測試開始前，確保設定檔中定義的 'default_user'
+    已經被註冊，為大多數測試提供一個可用的預設帳號。
+    """
+    logger.info('開始建立預設帳號...')
+    user_creator('default_user')
+
+
+@pytest.fixture(scope='session')
+def setup_change_password_user(user_creator: Callable[[str], None]):
+    """
+    一個 session 範圍的 fixture，用於建立密碼變更測試所需的專用帳號。
+
+    注意：此 fixture **不會**自動執行。
+    只有當測試案例明確地將 `setup_change_password_user` 作為參數時，
+    它才會被觸發以建立指定的使用者。
+    """
+    user_creator('change_password_user')
 
 
 @pytest.fixture(scope='session')
@@ -96,9 +123,9 @@ def shared_used_urls() -> set:
 
 
 @pytest.fixture(scope='session')
-def api_provider(api_factory, shared_used_urls) -> ApiClientProvider:
+def api_provider(api_factory, shared_used_urls, test_config: dict) -> ApiClientProvider:
     """提供 ApiClientProvider 實例，直接從全域設定獲取 URLs。"""
-    env_urls = get_config().get('urls', {})
+    env_urls = test_config.get('urls', {})
     return ApiClientProvider(api_factory, env_urls, shared_used_urls)
 
 
@@ -106,29 +133,16 @@ def api_provider(api_factory, shared_used_urls) -> ApiClientProvider:
 
 
 @pytest.fixture(scope='session')
-def user_api(api_provider: ApiClientProvider) -> UserAPI:
-    return api_provider.get(UserAPI)
-
-
-# --- 登入輔助函式 ---
-
-
-def _perform_pre_login(api_client: UserAPI, user_data: dict, token_prefix: str = ''):
-    account, password = user_data['account'], user_data['password']
-    with allure.step(f'前置步驟 => {account} 登入'):
-        result = api_client.login(account, password)
-        if result.get('status_code') != 200:
-            raise ValueError(f'pre_login 失敗 Account:{account} \n{result}')
-        token = result.get('data', {}).get('access_token')
-        if not token:
-            raise ValueError(f'登入 response 不含 token: {result}')
-        api_client.session.headers['Authorization'] = f'{token_prefix}{token}'
-        api_client.login_result = result
+def auth_api(api_provider: ApiClientProvider) -> AuthAPI:
+    """
+    提供一個 session 生命週期的 AuthAPI 客戶端實例。
+    """
+    return api_provider.get(AuthAPI)
 
 
 @pytest.fixture
-def user_data(request: pytest.FixtureRequest) -> dict:
-    """ 
+def user_data(request: pytest.FixtureRequest, test_config: dict) -> dict:
+    """
     根據 parametrize 或預設值提供使用者資料。
     - 如果案例使用 parametrize (indirect=True)，則使用傳入的參數。
     - 參數可以是 string (在 secrets.yml 中的 user key)。
@@ -137,7 +151,7 @@ def user_data(request: pytest.FixtureRequest) -> dict:
     """
     if hasattr(request, 'param'):
         param = request.param
-        users = get_config()['users']
+        users = test_config['users']
 
         if isinstance(param, dict):
             # 直接使用傳入的 dict
@@ -150,7 +164,7 @@ def user_data(request: pytest.FixtureRequest) -> dict:
                 pytest.fail(f"在 secrets.yml 中找不到透過參數傳入的 user key: '{user_key}'")
             return user
 
-    default_user = get_config().get('users', {}).get('default_user')
+    default_user = test_config.get('users', {}).get('default_user')
     if not default_user:
         pytest.fail("在 secrets.yml 的 'users' 中找不到預設的 'default_user'")
 
@@ -159,20 +173,33 @@ def user_data(request: pytest.FixtureRequest) -> dict:
 
 # --- 預登入 Fixtures ---
 @pytest.fixture
-def pre_login(user_data: dict, user_api: UserAPI) -> Generator[UserAPI, None, None]:
-    _perform_pre_login(user_api, user_data, token_prefix='Bearer ')
-    yield user_api
+def pre_login(user_data: dict, auth_api: AuthAPI) -> Generator[AuthAPI, None, None]:
+    account, password = user_data['account'], user_data['password']
+    with allure.step(f'前置步驟 => {account} 登入'):
+        result = auth_api.login(account, password)
+        if result.get('status_code') != 200:
+            raise ValueError(f'pre_login 失敗 Account:{account} \n{result}')
+        token = result.get('data', {}).get('access_token')
+        if not token:
+            raise ValueError(f'登入 response 不含 token: {result}')
+        auth_api.session.headers['Authorization'] = f'Bearer {token}'
+        auth_api.login_result = result
+    yield auth_api
 
 
-@pytest_asyncio.fixture()
-async def ws_connect(user_data: dict, user_api: UserAPI) -> AsyncIterator[AsyncBaseWS]:
-    result = user_api.login(user_data['account'], user_data['password'])
-    ws_url = result['data']['ws_url']
+@pytest_asyncio.fixture
+async def ws_connect(auth_api: AuthAPI, user_data: dict) -> AsyncIterator[AsyncBaseWS]:
+    """提供一個已連線的 ws 物件，並在測試後自動關閉。"""
+    result = auth_api.login(user_data['account'], user_data['password'])
+    ws_url = result.get('data', {}).get('ws_url')
+    if not ws_url:
+        raise ValueError(f"登入成功，但在Response中找不到 'ws_url': {result}")
+
     with allure.step('WS connect'):
-        ws = AsyncBaseWS(ws_url)
-        await ws.connect()
-    yield ws
-    await ws.close_connect()
+        ws_client = AsyncBaseWS(ws_url)
+        await ws_client.connect()
+    yield ws_client
+    await ws_client.close_connect()
 
 
 # --- 其他 Hooks ---

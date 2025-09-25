@@ -18,7 +18,6 @@ class TestConnect:
         """
         ws_client = ws_connect
         logger.info(f'WebSocket 連線成功，客戶端為: {ws_client}')
-
         # AsyncBaseWS 會自動在背景每 7 秒發送一次 Ping。
         # 我們這裡等待 10 秒，以確保至少有一次 Ping-Pong 交換。
         # 使用 asyncio.sleep 來避免阻塞事件循環。

@@ -2,7 +2,7 @@ from api.service_names import Service
 from utils.base_request import BaseRequest
 
 
-class UserAPI(BaseRequest):
+class AuthAPI(BaseRequest):
     service = Service.FRONT.value
 
     def __init__(self, base_url: str, session=None):

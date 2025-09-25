@@ -6,7 +6,7 @@ import allure
 import msgpack
 import websockets
 
-from api.constants import OpCode
+from api.ws_constants import OpCode
 from utils.result_base import ResultBase
 
 logger = logging.getLogger(__name__)

@@ -8,9 +8,9 @@ from faker import Faker
 
 from utils.config_loader import get_config
 
-from ..common import expectations
 from ..common.base import AllureCase, TestCaseData
 from ..common.enums import AllureSeverity, PytestMark
+from ..common.expectations import Auth, Common
 from ..common.helpers import create_param_from_case, generate_accounts
 
 # 初始化 Faker
@@ -29,7 +29,7 @@ class LoginRequest:
 class LoginCase(AllureCase, TestCaseData[LoginRequest]):
     """登入 API 的測試案例"""
 
-    parent_suite: str = 'API 測試'
+    parent_suite: str = 'REST API 測試'
     suite: str = '登入'
     epic: str = '使用者相關功能'
     feature: str = '登入功能'
@@ -54,7 +54,7 @@ def generate_login_cases() -> list:
                     account=default_user['account'],
                     password=default_user['password'],
                 ),
-                expected=expectations.SUCCESS_EXPECTED,
+                expected=Common.SUCCESS,
                 marks=[PytestMark.POSITIVE, PytestMark.SINGLE],
             ),
             id='login_success',
@@ -67,7 +67,7 @@ def generate_login_cases() -> list:
                 title='帳號有誤',
                 description='輸入一個不存在的隨機帳號',
                 request=LoginRequest(account=generate_accounts(1)[0], password='password1'),
-                expected=expectations.LOGIN_ACCOUNT_ERROR_EXPECTED,
+                expected=Auth.Login.ACCOUNT_ERROR,
                 marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
             ),
             id='incorrect_account',
@@ -80,7 +80,7 @@ def generate_login_cases() -> list:
                 title='密碼有誤',
                 description='輸入正確帳號，但隨機產生錯誤密碼',
                 request=LoginRequest(account=default_user['account'], password=fake.password()),
-                expected=expectations.LOGIN_PASSWORD_ERROR_EXPECTED,
+                expected=Auth.Login.PASSWORD_ERROR,
                 marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
             ),
             id='incorrect_password',

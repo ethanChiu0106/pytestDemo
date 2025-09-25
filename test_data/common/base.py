@@ -4,13 +4,13 @@ from typing import Any, Dict, Generic, List, Optional, Protocol, TypeVar
 
 from .enums import AllureSeverity, PytestMark
 
-# A generic type variable representing the structure of the Request
+# 代表請求結構的泛型型別變數
 RequestType = TypeVar('RequestType')
 
 
 @dataclass
 class TestCaseData(Generic[RequestType]):
-    """Core data for a test case (request, expected, etc.)"""
+    """測試案例的核心資料 (請求、預期結果等)"""
 
     request: Optional[RequestType]
     expected: Dict[str, Any]
@@ -19,9 +19,9 @@ class TestCaseData(Generic[RequestType]):
 
 @dataclass
 class AllureCase:
-    """Base test case, including classification tags for Allure reports"""
+    """基礎測試案例，包含用於 Allure 報告的分類標籤"""
 
-    # Fields without default values must come first.
+    # 沒有預設值的欄位必須在前面
     title: str
     description: str
     sub_suite: str
@@ -31,19 +31,22 @@ class AllureCase:
     epic: str
     feature: str
 
-    # Fields with default values must come last.
-    severity: AllureSeverity = AllureSeverity.NORMAL  # Use the new custom enum
+    # 有預設值的欄位必須在後面
+    severity: AllureSeverity = AllureSeverity.NORMAL  # 使用自訂的 Enum
 
 
 class CombinedTestCase(Protocol[RequestType]):
     """
-    A Protocol defining the combined interface expected by create_param_from_case.
-    This allows for more precise type hinting when a case object inherits from multiple base classes.
+    一個 Protocol，定義了 create_param_from_case 所期望的組合介面。
+    它明確列出了來自 TestCaseData 和 AllureCase 的所有屬性，以提供精確的型別提示。
     """
 
+    # 來自 TestCaseData 的屬性
     request: Optional[RequestType]
     expected: Dict[str, Any]
     marks: List[PytestMark]
+
+    # 來自 AllureCase 的屬性
     title: str
     description: str
     parent_suite: str
