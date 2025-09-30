@@ -3,6 +3,19 @@ name = "pytest-auto-test"
 dynamic = ["version"]
 # Support Python 3.11+.
 requires-python = ">=3.11"
+dependencies = [
+    "allure-pytest",
+    "Faker",
+    "msgpack",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-sugar",
+    "python-dotenv",
+    "PyYAML",
+    "requests",
+    "websockets",
+    "pyhumps",
+]
 
 [tool.ruff]
 # Set the maximum line length to 120.
@@ -15,3 +28,7 @@ extend-select = ["E501"]
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["testcases*", "scripts*"]

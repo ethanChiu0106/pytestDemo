@@ -198,6 +198,7 @@ allure-results/
 allure-report/
 environment.properties
 env.ini
+.gemini/
 
 # Local secrets file for testing
 data/secrets.yml
