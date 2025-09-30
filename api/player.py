@@ -18,6 +18,6 @@ class Player(BaseWsApi):
         data = {'name': name}
         return await self._send_request(C2SPlayerFlow.UpdateName, data=data)
 
-    async def update_phone(self, phone: str) -> dict:
-        data = {'phone': phone}
+    async def bind_phone(self, telephone: str) -> dict:
+        data = {'telephone': telephone}
         return await self._send_request(C2SPlayerFlow.BindPhone, data=data)

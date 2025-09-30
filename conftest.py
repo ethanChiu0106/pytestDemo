@@ -11,6 +11,8 @@ import pytest_asyncio
 import requests
 
 from api.auth import AuthAPI
+from api.item import Item
+from api.player import Player
 from test_data.common.expectations import Auth
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
@@ -100,6 +102,14 @@ def setup_change_password_user(user_creator: Callable[[str], None]):
     它才會被觸發以建立指定的使用者。
     """
     user_creator('change_password_user')
+
+
+@pytest.fixture(scope='session')
+def setup_duplicate_phone_user(user_creator: Callable[[str], None]):
+    """
+    一個 session 範圍的 fixture，用於建立手機綁定測試所需的專用帳號。
+    """
+    user_creator('duplicate_phone_user')
 
 
 @pytest.fixture(scope='session')

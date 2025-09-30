@@ -25,7 +25,6 @@ class AsyncBaseWS:
         :param ws_url: 要連接的 WebSocket 伺服器 URL。
         :param receive_init_msgs: 是否在連線後等待接收初始訊息 (player_init_info)。
         """
-        self.init_notice = None  # 儲存初始通知訊息
         self.ws_url = ws_url  # WebSocket 伺服器 URL
         self.receive_init_msgs = receive_init_msgs  # 控制是否接收初始訊息的旗標
         self._websocket: websockets.WebSocketClientProtocol | None = None  # WebSocket 連線物件
@@ -67,8 +66,8 @@ class AsyncBaseWS:
         - 其他訊息會被解包後放入 `message_queue`。
         """
         try:
-            # 當連線存在且未關閉時，無限循環地接收訊息
-            while self._websocket and not self._websocket.closed:
+            # 持續監聽傳入的訊息，直到連線關閉
+            while True:
                 response = await self._websocket.recv()  # 非同步等待接收訊息
                 data = self.unpack_msg(response)
 
@@ -108,10 +107,13 @@ class AsyncBaseWS:
         content = self._pack_msg(c2s_data)
 
         logger.debug('msgpack data => %s', content)
-        if self._websocket and not self._websocket.closed:
-            await self._websocket.send(content)
+        if self._websocket:
+            try:
+                await self._websocket.send(content)
+            except websockets.exceptions.ConnectionClosed:
+                logger.warning('WebSocket 連線已關閉，無法發送訊息。')
         else:
-            logger.warning('WebSocket 尚未連線或已關閉，無法發送訊息。')
+            logger.warning('WebSocket 尚未連線，無法發送訊息。')
 
     async def send_and_receive(
         self,
@@ -124,8 +126,8 @@ class AsyncBaseWS:
         """
         發送一則訊息，並在指定的超時時間內，等待並篩選特定 op_code 的回應。
         """
-        if not (self._websocket and not self._websocket.closed):
-            logger.error('WebSocket 尚未連線或已關閉。')
+        if not self._websocket:
+            logger.error('WebSocket 尚未連線。')
             return {'status_code': 500, 'message': 'WebSocket not connected'}
 
         dict_data = {
@@ -159,7 +161,7 @@ class AsyncBaseWS:
 
         :return: 佇列中的下一則訊息。
         """
-        if self._websocket and not self._websocket.closed:
+        if self._websocket:
             # 直接從佇列中取出訊息
             data = await self.message_queue.get()
             logger.info('Receive => %s', data)
@@ -247,7 +249,7 @@ class AsyncBaseWS:
         """
         await self.stop_polling()
         await self.stop_listener()
-        if self._websocket and not self._websocket.closed:
+        if self._websocket:
             await self._websocket.close()
             logger.info('WebSocket 連線已關閉。')
         else:
