@@ -17,6 +17,7 @@ class Common:
     """通用預期結果"""
 
     SUCCESS = _http_expectation(0, 200)
+    FAIL_HTTP_STRUCTURE = {'code': None, 'status_code': None, 'msg': None}
 
 
 class Auth:
@@ -39,6 +40,15 @@ class Auth:
 
         ACCOUNT_ERROR = _http_expectation(2002, 400)
         PASSWORD_ERROR = _http_expectation(2004, 400)
+
+
+class Item:
+    """物品相關功能的預期結果 (REST)"""
+
+    class GetItem:
+        """獲取物品相關"""
+
+        NOT_FOUND = _http_expectation(3010, 404)
 
 
 class WebSocket:

@@ -1,7 +1,7 @@
 import pytest
 
 from api.player import Player
-from test_data.api_test_data.get_user_info import GetUserInfoCase, generate_get_user_info_cases
+from test_data.api_test_data.ws.get_user_info import GetUserInfoCase, generate_get_user_info_cases
 from utils.allure_utils import allure_from_case
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import assert_result

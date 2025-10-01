@@ -7,12 +7,11 @@ from dataclasses import dataclass
 
 from faker import Faker
 
+from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.expectations import Auth, Common
+from test_data.common.helpers import create_param_from_case
 from utils.config_loader import get_config
-
-from ..common.base import AllureCase, TestCaseData
-from ..common.enums import AllureSeverity, PytestMark
-from ..common.expectations import Auth, Common
-from ..common.helpers import create_param_from_case
 
 # 初始化 Faker
 fake = Faker('zh_TW')
@@ -30,7 +29,7 @@ class ChangePasswordRequest:
 class ChangePasswordCase(AllureCase, TestCaseData[ChangePasswordRequest]):
     """變更密碼 API 的測試案例"""
 
-    parent_suite: str = 'REST API 測試'
+    parent_suite: str = 'HTTP API 測試'
     suite: str = '變更密碼'
     epic: str = '變更密碼'
     feature: str = '變更密碼測試'
@@ -62,8 +61,11 @@ def generate_change_password_cases() -> list:
                     old_password=old,
                     new_password=new,
                 ),
-                expected=Common.SUCCESS,
-                marks=[PytestMark.POSITIVE, PytestMark.SINGLE],
+                expected={
+                    'result': Common.SUCCESS,
+                    'schema': {'status_code': None, 'code': None, 'data': None},
+                },
+                marks=[PytestMark.POSITIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_success',
         ),
@@ -75,8 +77,8 @@ def generate_change_password_cases() -> list:
                 title='變更密碼失敗-舊密碼輸入錯誤',
                 description='舊密碼輸入錯誤',
                 request=ChangePasswordRequest(old_password=new, new_password=new),
-                expected=Auth.Login.PASSWORD_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={'result': Auth.Login.PASSWORD_ERROR, 'schema': Common.FAIL_HTTP_STRUCTURE},
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_failure_old_password_wrong',
         ),
@@ -91,8 +93,8 @@ def generate_change_password_cases() -> list:
                     old_password=old,
                     new_password=password_6_chars,
                 ),
-                expected=Auth.Validation.PASSWORD_FORMAT_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={'result': Auth.Validation.PASSWORD_FORMAT_ERROR, 'schema': Common.FAIL_HTTP_STRUCTURE},
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_failure_password_too_short',
         ),
@@ -107,8 +109,8 @@ def generate_change_password_cases() -> list:
                     old_password=old,
                     new_password=password_21_chars,
                 ),
-                expected=Auth.Validation.PASSWORD_FORMAT_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={'result': Auth.Validation.PASSWORD_FORMAT_ERROR, 'schema': Common.FAIL_HTTP_STRUCTURE},
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_failure_password_too_long',
         ),
@@ -123,8 +125,8 @@ def generate_change_password_cases() -> list:
                     old_password=old,
                     new_password=password_all_eng,
                 ),
-                expected=Auth.Validation.PASSWORD_FORMAT_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={'result': Auth.Validation.PASSWORD_FORMAT_ERROR, 'schema': Common.FAIL_HTTP_STRUCTURE},
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_failure_password_all_english',
         ),
@@ -139,8 +141,8 @@ def generate_change_password_cases() -> list:
                     old_password=old,
                     new_password=password_all_num,
                 ),
-                expected=Auth.Validation.PASSWORD_FORMAT_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={'result': Auth.Validation.PASSWORD_FORMAT_ERROR, 'schema': Common.FAIL_HTTP_STRUCTURE},
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='change_password_failure_password_all_number',
         ),

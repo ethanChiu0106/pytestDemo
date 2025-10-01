@@ -6,12 +6,11 @@ from dataclasses import dataclass
 
 from faker import Faker
 
+from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.expectations import Auth, Common
+from test_data.common.helpers import create_param_from_case, generate_accounts
 from utils.config_loader import get_config
-
-from ..common.base import AllureCase, TestCaseData
-from ..common.enums import AllureSeverity, PytestMark
-from ..common.expectations import Auth, Common
-from ..common.helpers import create_param_from_case, generate_accounts
 
 # 初始化 Faker
 fake = Faker('zh_TW')
@@ -29,7 +28,7 @@ class LoginRequest:
 class LoginCase(AllureCase, TestCaseData[LoginRequest]):
     """登入 API 的測試案例"""
 
-    parent_suite: str = 'REST API 測試'
+    parent_suite: str = 'HTTP API 測試'
     suite: str = '登入'
     epic: str = '使用者相關功能'
     feature: str = '登入功能'
@@ -54,8 +53,21 @@ def generate_login_cases() -> list:
                     account=default_user['account'],
                     password=default_user['password'],
                 ),
-                expected=Common.SUCCESS,
-                marks=[PytestMark.POSITIVE, PytestMark.SINGLE],
+                expected={
+                    'result': Common.SUCCESS,
+                    'schema': {
+                        'code': None,
+                        'data': {
+                            'access_token': None,
+                            'ws_url': None,
+                            'player_info': {
+                                'username': None,
+                                'telephone': None,
+                            },
+                        },
+                    },
+                },
+                marks=[PytestMark.POSITIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='login_success',
         ),
@@ -67,8 +79,11 @@ def generate_login_cases() -> list:
                 title='帳號有誤',
                 description='輸入一個不存在的隨機帳號',
                 request=LoginRequest(account=generate_accounts(1)[0], password='password1'),
-                expected=Auth.Login.ACCOUNT_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={
+                    'result': Auth.Login.ACCOUNT_ERROR,
+                    'schema': Common.FAIL_HTTP_STRUCTURE,
+                },
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='incorrect_account',
         ),
@@ -80,8 +95,11 @@ def generate_login_cases() -> list:
                 title='密碼有誤',
                 description='輸入正確帳號，但隨機產生錯誤密碼',
                 request=LoginRequest(account=default_user['account'], password=fake.password()),
-                expected=Auth.Login.PASSWORD_ERROR,
-                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE],
+                expected={
+                    'result': Auth.Login.PASSWORD_ERROR,
+                    'schema': Common.FAIL_HTTP_STRUCTURE,
+                },
+                marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
             id='incorrect_password',
         ),

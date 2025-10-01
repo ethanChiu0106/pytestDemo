@@ -4,10 +4,10 @@
 
 from dataclasses import dataclass
 
-from ..common.base import AllureCase, TestCaseData
-from ..common.enums import AllureSeverity, PytestMark
-from ..common.expectations import WebSocket
-from ..common.helpers import create_param_from_case
+from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.expectations import WebSocket
+from test_data.common.helpers import create_param_from_case
 
 
 @dataclass
@@ -21,7 +21,7 @@ class GetUserInfoRequest:
 class GetUserInfoCase(AllureCase, TestCaseData[GetUserInfoRequest]):
     """取得使用者資訊 WS 的測試案例"""
 
-    parent_suite: str = 'WS 測試'
+    parent_suite: str = 'WebSocket 測試'
     suite: str = '取得使用者資訊'
     epic: str = '使用者相關功能'
     feature: str = '取得使用者資訊功能'

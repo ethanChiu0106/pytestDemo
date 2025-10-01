@@ -4,10 +4,10 @@
 
 from dataclasses import dataclass
 
-from ..common.base import AllureCase, TestCaseData
-from ..common.enums import AllureSeverity, PytestMark
-from ..common.expectations import WebSocket
-from ..common.helpers import create_param_from_case
+from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.expectations import WebSocket
+from test_data.common.helpers import create_param_from_case
 
 
 @dataclass
@@ -21,7 +21,7 @@ class UpdateNameRequest:
 class UpdateNameCase(AllureCase, TestCaseData[UpdateNameRequest]):
     """更新名稱 WS 的測試案例"""
 
-    parent_suite: str = 'WS 測試'
+    parent_suite: str = 'WebSocket 測試'
     suite: str = '變更名稱'
     epic: str = '使用者相關功能'
     feature: str = '更新名稱功能'

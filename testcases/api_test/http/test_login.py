@@ -1,9 +1,9 @@
 import pytest
 
 from api.auth import AuthAPI
-from test_data.api_test_data.login import LoginCase, generate_login_cases
+from test_data.api_test_data.http.login import LoginCase, generate_login_cases
 from utils.allure_utils import allure_from_case
-from utils.case_verify_tool import assert_result
+from utils.case_verify_tool import verify_case_auto
 
 
 @pytest.mark.parametrize('case', generate_login_cases())
@@ -15,4 +15,4 @@ class TestLogin:
         account = request.account
         password = request.password
         actual_result = auth_api.login(account, password)
-        assert_result(actual_result, excepted)
+        verify_case_auto(actual_result, excepted)

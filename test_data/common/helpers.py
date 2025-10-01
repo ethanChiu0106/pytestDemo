@@ -9,7 +9,7 @@ import pytest
 from faker import Faker
 
 from .base import AllureCase, CombinedTestCase
-from .enums import AllureSeverity, PytestMark
+from .enums import PytestMark
 
 # 初始化 Faker
 fake = Faker('zh_TW')

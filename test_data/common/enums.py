@@ -1,4 +1,5 @@
 from enum import Enum
+
 import allure
 
 
@@ -9,9 +10,11 @@ class PytestMark(Enum):
     """
 
     WS = 'ws'
+    HTTP = 'http'
     POSITIVE = 'positive'
     NEGATIVE = 'negative'
     SINGLE = 'single'
+    SCENARIO = 'scenario'
     SKIP = 'skip'
 
 

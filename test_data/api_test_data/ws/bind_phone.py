@@ -8,10 +8,10 @@ from faker import Faker
 
 from utils.config_loader import get_config
 
-from ..common.base import AllureCase, TestCaseData
-from ..common.enums import AllureSeverity, PytestMark
-from ..common.expectations import WebSocket
-from ..common.helpers import create_param_from_case
+from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.expectations import WebSocket
+from test_data.common.helpers import create_param_from_case
 
 fake = Faker('zh_TW')
 
@@ -27,7 +27,7 @@ class BindPhoneRequest:
 class BindPhoneCase(AllureCase, TestCaseData[BindPhoneRequest]):
     """綁定手機 WS 的測試案例"""
 
-    parent_suite: str = 'WS 測試'
+    parent_suite: str = 'WebSocket 測試'
     suite: str = '綁定手機'
     epic: str = '使用者相關功能'
     feature: str = '綁定手機功能'

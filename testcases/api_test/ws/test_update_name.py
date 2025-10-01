@@ -1,7 +1,7 @@
 import pytest
 
 from api.player import Player
-from test_data.api_test_data.updat_name import UpdateNameCase, generate_update_name_cases
+from test_data.api_test_data.ws.updat_name import UpdateNameCase, generate_update_name_cases
 from utils.allure_utils import allure_from_case
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import assert_result

@@ -1,9 +1,9 @@
 import pytest
 
 from api.auth import AuthAPI
+from test_data.api_test_data.http.register import RegisterCase, generate_register_cases
 from utils.allure_utils import allure_from_case
-from utils.case_verify_tool import assert_result
-from test_data.api_test_data.register import RegisterCase, generate_register_cases
+from utils.case_verify_tool import verify_case_auto
 
 
 class TestRegister:
@@ -15,4 +15,4 @@ class TestRegister:
         account = request.account
         password = request.password
         actual_result = auth_api.register(account, password)
-        assert_result(actual_result, excepted)
+        verify_case_auto(actual_result, excepted)

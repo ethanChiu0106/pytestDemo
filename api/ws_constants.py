@@ -20,4 +20,3 @@ class C2SPlayerFlow(Enum):
 class C2SItemFlow(Enum):
     GetAllItems = 1
     GetItemById = 2
-    CreateItem = 3

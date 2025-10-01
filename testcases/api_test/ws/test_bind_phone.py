@@ -6,7 +6,7 @@ import pytest_asyncio
 
 from api.auth import AuthAPI
 from api.player import Player
-from test_data.api_test_data.bind_phone import BindPhoneCase, generate_bind_phone_cases
+from test_data.api_test_data.ws.bind_phone import BindPhoneCase, generate_bind_phone_cases
 from utils.allure_utils import allure_from_case
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import assert_result

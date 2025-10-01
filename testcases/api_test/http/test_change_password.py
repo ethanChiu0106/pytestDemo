@@ -1,9 +1,9 @@
 import pytest
 
 from api.auth import AuthAPI
-from test_data.api_test_data.change_password import ChangePasswordCase, generate_change_password_cases
-from utils import case_verify_tool as verify
+from test_data.api_test_data.http.change_password import ChangePasswordCase, generate_change_password_cases
 from utils.allure_utils import allure_from_case
+from utils.case_verify_tool import verify_case_auto
 from utils.config_loader import get_config
 
 
@@ -45,4 +45,4 @@ class TestChangePassword:
         old = request.old_password
         new = request.new_password
         actual_result = auth_api.change_password(old, new)
-        verify.assert_result(actual_result, excepted)
+        verify_case_auto(actual_result, excepted)

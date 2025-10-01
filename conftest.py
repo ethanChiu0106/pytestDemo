@@ -12,7 +12,6 @@ import requests
 
 from api.auth import AuthAPI
 from api.item import Item
-from api.player import Player
 from test_data.common.expectations import Auth
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS

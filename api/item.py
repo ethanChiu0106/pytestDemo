@@ -1,8 +1,8 @@
-from base_ws_api import BaseWsApi
-from ws_constants import OpCode
-
 from api.service_names import Service
 from utils.base_request import BaseRequest
+
+from .base_ws_api import BaseWsApi
+from .ws_constants import C2SItemFlow, OpCode
 
 
 class Item(BaseRequest):
@@ -25,22 +25,21 @@ class Item(BaseRequest):
         result = self.get(f'/items/{item_id}')
         return result
 
-    def create_item(self, name: str, description: str | None = None) -> dict:
-        """
-        Creates a new item.
-        """
-        json_data = {'name': name}
-        if description is not None:
-            json_data['description'] = description
-        result = self.post('/items/', json=json_data)
-        return result
-
 
 class ItemWs(BaseWsApi):
     @property
     def op_code(self) -> int:
-        return OpCode.C2SPlayerFlow.value
+        return OpCode.C2SItemFlow.value
 
     @property
     def expected_op_code(self) -> int:
-        return OpCode.S2CPlayerFlow.value
+        return OpCode.S2CItemFlow.value
+
+    async def get_item_by_id(self, item_id: dict) -> dict:
+        """透過 WebSocket 獲取單一物品"""
+        data = {'item_id': item_id}
+        return await self._send_request(sub_code=C2SItemFlow.GetItemById, data=data)
+
+    async def get_all_items(self) -> dict:
+        """透過 WebSocket 獲取所有物品"""
+        return await self._send_request(sub_code=C2SItemFlow.GetAllItems)
