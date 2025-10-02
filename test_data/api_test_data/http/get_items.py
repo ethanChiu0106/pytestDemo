@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
-from test_data.common.expectations import Common
+from test_data.common.expectations import HTTP
 from test_data.common.helpers import create_param_from_case
 
 
@@ -41,12 +41,8 @@ def generate_get_items_cases() -> list:
                 description='測試是否能成功獲取所有物品的列表',
                 request=GetItemsRequest(),
                 expected={
-                    'result': Common.SUCCESS,
-                    'schema': {
-                        'status_code': None,
-                        'code': None,
-                        'data': [{'name': None, 'description': None, 'id': None}],
-                    },
+                    'result': HTTP.Common.SUCCESS,
+                    'schema': HTTP.Item.Schemas.GET_ITEM_LIST,
                 },
                 marks=[PytestMark.POSITIVE, PytestMark.HTTP, PytestMark.SINGLE],
             ),

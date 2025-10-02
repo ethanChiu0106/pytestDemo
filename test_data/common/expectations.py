@@ -13,67 +13,115 @@ def _ws_error_expectation(error_code: int) -> dict:
     return {'error_code': error_code, 'success': False}
 
 
-class Common:
-    """通用預期結果"""
+class HTTP:
+    """包含所有 HTTP 相關的預期結果"""
 
-    SUCCESS = _http_expectation(0, 200)
-    FAIL_HTTP_STRUCTURE = {'code': None, 'status_code': None, 'msg': None}
+    class Common:
+        """通用預期結果"""
 
+        SUCCESS = _http_expectation(0, 200)
+        FAIL_HTTP_STRUCTURE = {'code': int, 'status_code': int, 'msg': str}
 
-class Auth:
-    """使用者驗證相關功能的預期結果"""
+        class Schemas:
+            """通用的 Schema 結構"""
 
-    class Validation:
-        """通用的驗證相關錯誤"""
+            SUCCESS_WITH_NULL_DATA = {'status_code': int, 'code': int, 'data': None}
 
-        ACCOUNT_FORMAT_ERROR = _http_expectation(2001, 400)
-        PASSWORD_FORMAT_ERROR = _http_expectation(2003, 400)
+    class Auth:
+        """使用者驗證相關功能的預期結果"""
 
-    class Register:
-        """註冊相關"""
+        class Schemas:
+            """Auth 相關的 Schema 結構"""
 
-        SUCCESS = _http_expectation(0, 201)
-        REPEATED_ACCOUNT = _http_expectation(2000, 400)
+            LOGIN_SUCCESS = {
+                'code': int,
+                'data': {
+                    'access_token': str,
+                    'ws_url': str,
+                    'player_info': {'username': str, 'telephone': (type(None), str)},
+                },
+            }
+            REGISTER_SUCCESS = {
+                'status_code': int,
+                'code': int,
+                'data': {'account': str, 'username': str, 'telephone': None, 'id': int},
+            }
 
-    class Login:
-        """登入相關"""
+        class Validation:
+            ACCOUNT_FORMAT_ERROR = _http_expectation(2001, 400)
+            PASSWORD_FORMAT_ERROR = _http_expectation(2003, 400)
 
-        ACCOUNT_ERROR = _http_expectation(2002, 400)
-        PASSWORD_ERROR = _http_expectation(2004, 400)
+        class Register:
+            SUCCESS = _http_expectation(0, 201)
+            REPEATED_ACCOUNT = _http_expectation(2000, 400)
 
+        class Login:
+            ACCOUNT_ERROR = _http_expectation(2002, 400)
+            PASSWORD_ERROR = _http_expectation(2004, 400)
 
-class Item:
-    """物品相關功能的預期結果 (REST)"""
+    class Item:
+        """物品相關功能的預期結果 (REST)"""
 
-    class GetItem:
-        """獲取物品相關"""
+        class Schemas:
+            """Item 相關的 Schema 結構"""
 
-        NOT_FOUND = _http_expectation(3010, 404)
+            GET_SINGLE_ITEM = {'status_code': int, 'code': int, 'data': {'name': str, 'description': str, 'id': int}}
+            GET_ITEM_LIST = {'status_code': int, 'code': int, 'data': [{'name': str, 'description': str, 'id': int}]}
+
+        class GetItem:
+            NOT_FOUND = _http_expectation(3010, 404)
 
 
 class WebSocket:
     """WebSocket 相關功能的預期結果"""
 
-    SUCCESS = {'success': True}
-    UNSUPPORTED_SUBCODE = _ws_error_expectation(3002)
-    UNSUPPORTED_OPCODE = _ws_error_expectation(3004)
-    INTERNAL_SERVER_ERROR = _ws_error_expectation(3005)
+    class Schemas:
+        """WebSocket 相關的 Schema 結構"""
+
+        PLAYER_INFO = {
+            'success': bool,
+            'op_code': int,
+            'data': {'username': str, 'telephone': (type(None), str)},
+            'error_code': int,
+            'error_msg': str,
+            'sub_code': int,
+        }
+        SINGLE_ITEM = {
+            'success': bool,
+            'op_code': int,
+            'data': {'name': str, 'description': str, 'id': int},
+            'error_code': int,
+            'error_msg': str,
+            'sub_code': int,
+        }
+        ITEM_LIST = {
+            'success': bool,
+            'op_code': int,
+            'data': [{'name': str, 'description': str, 'id': int}],
+            'error_code': int,
+            'error_msg': str,
+            'sub_code': int,
+        }
+        FAIL = {
+            'success': bool,
+            'op_code': int,
+            'data': None,
+            'error_code': int,
+            'error_msg': str,
+            'sub_code': int,
+        }
+
+    class Common:
+        """通用的 WebSocket 預期結果"""
+
+        SUCCESS = {'success': True, 'error_code': 0, 'error_msg': ''}
 
     class User:
-        """使用者相關"""
-
-        USER_NOT_FOUND = _ws_error_expectation(3000)
-        NEW_NAME_NOT_PROVIDED = _ws_error_expectation(3001)
-        USER_FROM_TOKEN_NOT_FOUND = _ws_error_expectation(3003)
         TELEPHONE_NOT_PROVIDED = _ws_error_expectation(3006)
         INVALID_TELEPHONE_FORMAT = _ws_error_expectation(3007)
         TELEPHONE_ALREADY_REGISTERED = _ws_error_expectation(3008)
         INVALID_USERNAME_FORMAT = _ws_error_expectation(3013)
 
     class Item:
-        """物品相關"""
-
         ITEM_ID_NOT_PROVIDED = _ws_error_expectation(3009)
         ITEM_NOT_FOUND = _ws_error_expectation(3010)
-        ITEM_DATA_NOT_PROVIDED = _ws_error_expectation(3011)
-        INVALID_ITEM_DATA = _ws_error_expectation(3012)

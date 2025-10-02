@@ -8,7 +8,7 @@ from faker import Faker
 
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
-from test_data.common.expectations import Auth, Common, WebSocket
+from test_data.common.expectations import HTTP, WebSocket
 from test_data.common.helpers import create_param_from_case, generate_accounts
 
 fake = Faker('zh_TW')
@@ -63,12 +63,27 @@ def generate_user_profile_scenario_cases() -> list:
             new_password=new_password,
         ),
         'expected': {
-            'register': Auth.Register.SUCCESS,
-            'login': Common.SUCCESS,
-            'get_initial_info': WebSocket.SUCCESS,
-            'update_name': WebSocket.SUCCESS,
-            'change_password': Common.SUCCESS,
-            'revert_password': Common.SUCCESS,
+            'register': {
+                'result': HTTP.Auth.Register.SUCCESS,
+                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
+            },
+            'login': {'result': HTTP.Common.SUCCESS, 'schema': HTTP.Auth.Schemas.LOGIN_SUCCESS},
+            'get_initial_info': {
+                'result': WebSocket.Common.SUCCESS,
+                'schema': WebSocket.Schemas.PLAYER_INFO,
+            },
+            'update_name': {
+                'result': WebSocket.Common.SUCCESS,
+                'schema': WebSocket.Schemas.PLAYER_INFO,
+            },
+            'change_password': {
+                'result': HTTP.Common.SUCCESS,
+                'schema': HTTP.Common.Schemas.SUCCESS_WITH_NULL_DATA,
+            },
+            'revert_password': {
+                'result': HTTP.Common.SUCCESS,
+                'schema': HTTP.Common.Schemas.SUCCESS_WITH_NULL_DATA,
+            },
         },
         'severity': AllureSeverity.CRITICAL,
         'marks': [PytestMark.SCENARIO],

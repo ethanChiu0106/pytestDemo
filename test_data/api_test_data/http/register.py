@@ -8,7 +8,7 @@ from faker import Faker
 
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
-from test_data.common.expectations import Auth, Common
+from test_data.common.expectations import HTTP
 from test_data.common.helpers import create_param_from_case, generate_accounts
 
 fake = Faker('zh_TW')
@@ -62,12 +62,8 @@ def generate_register_cases() -> list:
             'account': valid_account,
             'password': valid_password,
             'expected': {
-                'result': Auth.Register.SUCCESS,
-                'schema': {
-                    'status_code': None,
-                    'code': None,
-                    'data': {'account': None, 'username': None, 'telephone': None, 'id': None},
-                },
+                'result': HTTP.Auth.Register.SUCCESS,
+                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
             },
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
@@ -81,12 +77,8 @@ def generate_register_cases() -> list:
             'account': account_5_chars,
             'password': password_7_chars,
             'expected': {
-                'result': Auth.Register.SUCCESS,
-                'schema': {
-                    'status_code': None,
-                    'code': None,
-                    'data': {'account': None, 'username': None, 'telephone': None, 'id': None},
-                },
+                'result': HTTP.Auth.Register.SUCCESS,
+                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
             },
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
@@ -100,12 +92,8 @@ def generate_register_cases() -> list:
             'account': account_20_chars,
             'password': account_20_chars,
             'expected': {
-                'result': Auth.Register.SUCCESS,
-                'schema': {
-                    'status_code': None,
-                    'code': None,
-                    'data': {'account': None, 'username': None, 'telephone': None, 'id': None},
-                },
+                'result': HTTP.Auth.Register.SUCCESS,
+                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
             },
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
@@ -120,8 +108,8 @@ def generate_register_cases() -> list:
             'account': valid_account,
             'password': valid_password,
             'expected': {
-                'result': Auth.Register.REPEATED_ACCOUNT,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Register.REPEATED_ACCOUNT,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.CRITICAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -135,8 +123,8 @@ def generate_register_cases() -> list:
             'account': 'a' * 21,
             'password': 'aa123456',
             'expected': {
-                'result': Auth.Validation.ACCOUNT_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -150,8 +138,8 @@ def generate_register_cases() -> list:
             'account': 'a' * 4,
             'password': 'aa123456',
             'expected': {
-                'result': Auth.Validation.ACCOUNT_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -165,8 +153,8 @@ def generate_register_cases() -> list:
             'account': negative_test_account,
             'password': password_6_chars,
             'expected': {
-                'result': Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -180,8 +168,8 @@ def generate_register_cases() -> list:
             'account': negative_test_account,
             'password': password_21_chars,
             'expected': {
-                'result': Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -195,8 +183,8 @@ def generate_register_cases() -> list:
             'account': negative_test_account,
             'password': password_all_eng,
             'expected': {
-                'result': Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
@@ -210,8 +198,8 @@ def generate_register_cases() -> list:
             'account': negative_test_account,
             'password': password_all_num,
             'expected': {
-                'result': Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': Common.FAIL_HTTP_STRUCTURE,
+                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
+                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
             },
             'severity': AllureSeverity.NORMAL,
             'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],

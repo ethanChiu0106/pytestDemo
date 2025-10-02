@@ -11,12 +11,12 @@ class OpCode(Enum):
     S2CItemFlow = 6
 
 
-class C2SPlayerFlow(Enum):
+class PlayerFlow(Enum):
     GetPlayerInfo = 1
     UpdateName = 2
     BindPhone = 3
 
 
-class C2SItemFlow(Enum):
+class ItemFlow(Enum):
     GetAllItems = 1
     GetItemById = 2

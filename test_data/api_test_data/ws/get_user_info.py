@@ -4,10 +4,11 @@
 
 from dataclasses import dataclass
 
+from api.ws_constants import OpCode, PlayerFlow
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import WebSocket
-from test_data.common.helpers import create_param_from_case
+from test_data.common.helpers import create_param_from_case, create_ws_expectation
 
 
 @dataclass
@@ -27,6 +28,11 @@ class GetUserInfoCase(AllureCase, TestCaseData[GetUserInfoRequest]):
     feature: str = '取得使用者資訊功能'
 
 
+op_code = OpCode.S2CPlayerFlow
+sub_code = PlayerFlow.GetPlayerInfo
+success_expected = create_ws_expectation(WebSocket.Common.SUCCESS, op_code, sub_code)
+
+
 def generate_get_user_info_cases() -> list:
     """
     產生取得使用者資訊 API 的測試情境。
@@ -40,7 +46,10 @@ def generate_get_user_info_cases() -> list:
                 title='取得使用者資訊成功',
                 description='測試登入後，是否可以成功取得使用者自己的資訊',
                 request=GetUserInfoRequest(),
-                expected=WebSocket.SUCCESS,
+                expected={
+                    'result': success_expected,
+                    'schema': WebSocket.Schemas.PLAYER_INFO,
+                },
                 marks=[PytestMark.POSITIVE, PytestMark.SINGLE, PytestMark.WS],
             ),
             id='get_user_info_success',

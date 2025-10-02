@@ -5,11 +5,11 @@ import pytest
 import pytest_asyncio
 
 from api.auth import AuthAPI
-from api.player import Player
+from api.player import PlayerWS
 from test_data.api_test_data.ws.bind_phone import BindPhoneCase, generate_bind_phone_cases
 from utils.allure_utils import allure_from_case
 from utils.async_base_ws import AsyncBaseWS
-from utils.case_verify_tool import assert_result
+from utils.case_verify_tool import verify_case_auto
 
 
 @pytest_asyncio.fixture(scope='module', autouse=True)
@@ -37,7 +37,7 @@ async def pre_bound_phone_user(
         ws_client = AsyncBaseWS(ws_url)
         await ws_client.connect()
 
-        player = Player(ws_client)
+        player = PlayerWS(ws_client)
         await player.bind_phone(pre_bound_phone)
 
     yield pre_bound_phone
@@ -50,8 +50,8 @@ class TestBindPhone:
     @pytest.mark.asyncio
     @pytest.mark.parametrize('case', generate_bind_phone_cases())
     async def test_bind_phone(self, ws_connect: AsyncBaseWS, case: BindPhoneCase):
-        player = Player(ws_connect)
+        player = PlayerWS(ws_connect)
         phone = case.request.telephone
         excepted = case.expected
         actual_result = await player.bind_phone(phone)
-        assert_result(actual_result, excepted)
+        verify_case_auto(actual_result, excepted)

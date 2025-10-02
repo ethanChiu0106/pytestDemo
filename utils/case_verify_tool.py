@@ -51,11 +51,12 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
 
     :param actual_dict: 要檢查的字典 (例如 API 回應)。
     :param expected_schema: 一個描述預期結構的字典。
-                            - 萬用字元: `'key': None` (只檢查鍵存在)
-                            - 型別: `'key': int`
-                            - 巢狀物件: `'key': {'sub_key': str}`
-                            - 物件列表: `'key': [{'id': int}]`
-                            - 純值列表: `'key': [int]`
+                            - 萬用字元: 'key': None (只檢查鍵存在)
+                            - 型別: 'key': int
+                            - 多重型別: 'key': (int, str, type(None))
+                            - 巢狀物件: 'key': {'sub_key': str}
+                            - 物件列表: 'key': [{'id': int}]
+                            - 純值列表: 'key': [int]
     """
 
     def _verify_list(path: str, data_list: list, schema_list: list):
@@ -75,7 +76,10 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
         if schema is None:
             return
 
-        if isinstance(schema, dict):
+        # 新增對 tuple 的判斷，用於多重型別驗證
+        if isinstance(schema, tuple):
+            assert isinstance(data, schema), f"路徑 '{path}' 的值型別 {type(data)} 不在預期的型別元組 {schema} 中"
+        elif isinstance(schema, dict):
             assert isinstance(data, dict), f"路徑 '{path}' 的值應為字典，但實際是 {type(data)}"
             # 遞迴主函式處理巢狀字典
             assert_structure(data, schema)
@@ -84,7 +88,7 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
         elif isinstance(schema, type):
             assert isinstance(data, schema), f"路徑 '{path}' 的值應為 {schema} 型別，但實際是 {type(data)}"
         else:
-            raise TypeError(f"預期結構 (schema) 中 '{path}' 的值 '{schema}' 不是合法的型別、字典、列表或 None。")
+            raise TypeError(f"預期結構 (schema) 中 '{path}' 的值 '{schema}' 不是合法的型別、字典、列表、元組或 None。")
 
     assert isinstance(actual_dict, dict), f'要驗證的對象不是字典，而是 {type(actual_dict)}'
 

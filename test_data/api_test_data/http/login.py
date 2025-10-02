@@ -8,7 +8,7 @@ from faker import Faker
 
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
-from test_data.common.expectations import Auth, Common
+from test_data.common.expectations import HTTP
 from test_data.common.helpers import create_param_from_case, generate_accounts
 from utils.config_loader import get_config
 
@@ -54,18 +54,8 @@ def generate_login_cases() -> list:
                     password=default_user['password'],
                 ),
                 expected={
-                    'result': Common.SUCCESS,
-                    'schema': {
-                        'code': None,
-                        'data': {
-                            'access_token': None,
-                            'ws_url': None,
-                            'player_info': {
-                                'username': None,
-                                'telephone': None,
-                            },
-                        },
-                    },
+                    'result': HTTP.Common.SUCCESS,
+                    'schema': HTTP.Auth.Schemas.LOGIN_SUCCESS,
                 },
                 marks=[PytestMark.POSITIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
@@ -80,8 +70,8 @@ def generate_login_cases() -> list:
                 description='輸入一個不存在的隨機帳號',
                 request=LoginRequest(account=generate_accounts(1)[0], password='password1'),
                 expected={
-                    'result': Auth.Login.ACCOUNT_ERROR,
-                    'schema': Common.FAIL_HTTP_STRUCTURE,
+                    'result': HTTP.Auth.Login.ACCOUNT_ERROR,
+                    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
                 },
                 marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),
@@ -96,8 +86,8 @@ def generate_login_cases() -> list:
                 description='輸入正確帳號，但隨機產生錯誤密碼',
                 request=LoginRequest(account=default_user['account'], password=fake.password()),
                 expected={
-                    'result': Auth.Login.PASSWORD_ERROR,
-                    'schema': Common.FAIL_HTTP_STRUCTURE,
+                    'result': HTTP.Auth.Login.PASSWORD_ERROR,
+                    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
                 },
                 marks=[PytestMark.NEGATIVE, PytestMark.SINGLE, PytestMark.HTTP],
             ),

@@ -11,8 +11,7 @@ import pytest_asyncio
 import requests
 
 from api.auth import AuthAPI
-from api.item import Item
-from test_data.common.expectations import Auth
+from test_data.common.expectations import HTTP
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
 from utils.config_loader import get_config, load_test_config
@@ -69,9 +68,9 @@ def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
 
         result = auth_api.register(account, password)
 
-        if result.get('code') == Auth.Register.SUCCESS['code']:
+        if result.get('code') == HTTP.Auth.Register.SUCCESS['code']:
             logger.info(f"帳號 '{account}' 創建成功")
-        elif result.get('code') == Auth.Register.REPEATED_ACCOUNT['code']:
+        elif result.get('code') == HTTP.Auth.Register.REPEATED_ACCOUNT['code']:
             logger.info(f"帳號 '{account}' 已存在")
         else:
             logger.warning(f"建置帳號 '{account}' 時發生錯誤: {result}")

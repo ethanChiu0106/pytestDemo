@@ -4,10 +4,11 @@
 
 from dataclasses import dataclass, field
 
+from api.ws_constants import ItemFlow, OpCode
 from test_data.common.base import AllureCase, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import WebSocket
-from test_data.common.helpers import create_param_from_case
+from test_data.common.helpers import create_param_from_case, create_ws_expectation
 
 
 @dataclass
@@ -28,6 +29,13 @@ class GetItemWsCase(AllureCase, TestCaseData[GetItemWsRequest]):
     feature: str = '獲取物品 (WS)'
 
 
+op_code = OpCode.S2CItemFlow
+sub_code = ItemFlow.GetItemById
+success_expected = create_ws_expectation(WebSocket.Common.SUCCESS, op_code, sub_code)
+fail_item_not_found = create_ws_expectation(WebSocket.Item.ITEM_NOT_FOUND, op_code, sub_code)
+fail_id_not_provide = create_ws_expectation(WebSocket.Item.ITEM_ID_NOT_PROVIDED, op_code, sub_code)
+
+
 def generate_get_item_ws_cases() -> list:
     """
     產生獲取物品 WebSocket API 的測試情境。
@@ -41,7 +49,7 @@ def generate_get_item_ws_cases() -> list:
                 title='獲取存在的物品',
                 description='使用 item_id=1 測試是否能成功獲取物品',
                 request=GetItemWsRequest(item_id=1),
-                expected=WebSocket.SUCCESS,
+                expected={'result': success_expected, 'schema': WebSocket.Schemas.SINGLE_ITEM},
                 marks=[PytestMark.POSITIVE, PytestMark.WS, PytestMark.SINGLE],
             ),
             id='get_item_ws_success',
@@ -54,7 +62,7 @@ def generate_get_item_ws_cases() -> list:
                 title='獲取不存在的物品',
                 description='使用一個極大的 item_id 測試物品不存在的情境',
                 request=GetItemWsRequest(item_id=999999),
-                expected=WebSocket.Item.ITEM_NOT_FOUND,
+                expected={'result': fail_item_not_found, 'schema': WebSocket.Schemas.FAIL},
                 marks=[PytestMark.NEGATIVE, PytestMark.WS, PytestMark.SINGLE],
             ),
             id='get_item_ws_not_found',
@@ -67,7 +75,7 @@ def generate_get_item_ws_cases() -> list:
                 title='請求中不帶 item_id',
                 description='測試請求的 data 中不包含 item_id 欄位',
                 request=GetItemWsRequest(item_id=None),
-                expected=WebSocket.Item.ITEM_ID_NOT_PROVIDED,
+                expected={'result': fail_id_not_provide, 'schema': WebSocket.Schemas.FAIL},
                 marks=[PytestMark.NEGATIVE, PytestMark.WS, PytestMark.SINGLE],
             ),
             id='get_item_ws_id_not_provided',

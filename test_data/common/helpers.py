@@ -3,6 +3,7 @@
 """
 
 import random
+from enum import Enum
 
 import allure
 import pytest
@@ -74,3 +75,17 @@ def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.par
     case_id = id or getattr(case, 'title', 'N/A')
 
     return pytest.param(case, marks=all_marks, id=case_id)
+
+
+def create_ws_expectation(base_expectation: dict, op_code_enum: Enum, sub_code_enum: Enum) -> dict:
+    """
+    以基礎預期結果為範本，建立包含 op_code 和 sub_code 的 WS 預期。
+    :param base_expectation: 基礎預期結果，如 WebSocket.Common.SUCCESS 或 WebSocket.User.TELEPHONE_NOT_PROVIDED
+    :param op_code_enum: OpCode 的 enum 成員
+    :param sub_code_enum: 對應的 sub_code enum 成員
+    :return: 包含 op_code 和 sub_code 的完整預期字典
+    """
+    expectation = base_expectation.copy()
+    expectation['op_code'] = op_code_enum.value
+    expectation['sub_code'] = sub_code_enum.value
+    return expectation
