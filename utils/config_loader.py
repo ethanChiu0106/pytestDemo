@@ -22,21 +22,20 @@ def deep_merge_dicts(base, override):
 def load_test_config(env: str) -> dict:
     """【共用函式】根據環境名稱，載入、合併並快取 secrets.yml 中的設定。"""
     global _config_cache
-    # 如果已有快取，直接回傳，避免重複載入
+    config_dir = 'config'
     if _config_cache is not None:
         return _config_cache
 
     try:
-        all_configs = ReadFileData.read_yaml_data('data', 'secrets.yml')
+        all_configs = ReadFileData.read_yaml_data(config_dir, 'secrets.yml')
     except FileNotFoundError:
-        config_path = 'data/secrets.yml'
+        config_path = f'{config_dir}/secrets.yml'
         pytest.fail(f'設定檔 {config_path} 不存在。請先從 secrets.yml.template 複製一份並填入資料。')
 
     common_config = all_configs.get('common', {})
     env_specific_config = all_configs.get(env, {})
     final_config = deep_merge_dicts(common_config, env_specific_config)
 
-    # 將載入的設定存入快取
     _config_cache = final_config
     return final_config
 

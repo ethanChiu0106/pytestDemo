@@ -242,7 +242,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pytest-auto-test"
+name = "pytest-demo"
 source = { virtual = "." }
 dependencies = [
     { name = "allure-pytest" },

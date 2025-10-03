@@ -201,4 +201,4 @@ env.ini
 .gemini/
 
 # Local secrets file for testing
-data/secrets.yml
+config/secrets.yml

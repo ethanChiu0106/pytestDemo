@@ -1,5 +1,5 @@
 [project]
-name = "pytest-auto-test"
+name = "pytest-demo"
 dynamic = ["version"]
 # Support Python 3.11+.
 requires-python = ">=3.11"

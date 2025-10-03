@@ -25,7 +25,7 @@
 
 ## 使用工具
 
-*   **語言**：Python 3.11.9
+*   **語言**：Python 3.11+
 *   **測試框架**：Pytest
 *   **環境與套件管理**：uv
 *   **WebSocket 客戶端**：websockets
@@ -33,14 +33,14 @@
 *   **數據序列化**：msgpack
 *   **數據壓縮**：gzip
 *   **測試報告**：Allure Report
-*   **Python 版本管理**：pyenv
+*   **Python 版本管理**：pyenv (可選)
 
 ## 安裝與設定
 
 ### 先決條件
 
 *   Git
-*   pyenv (用於管理 Python 版本)
+*   Python 3.11+
 *   uv
 *   Allure (用於生成報告)
 
@@ -48,18 +48,17 @@
 
 1.  **克隆專案**：
     ```bash
-    git clone https://github.com/EthanChiu-1/WD.git
-    cd WD
+    git clone <your-repository-url>
+    cd pytest-demo
     ```
 
-2.  **設定 Python 版本 (使用 pyenv)**：
+2.  **設定 Python 版本 (可選, 如使用 pyenv)**：
     ```bash
     pyenv install 3.11.9
     pyenv local 3.11.9
     ```
-    *注意：如果您沒有安裝 pyenv，請參考 pyenv 官方文檔進行安裝。*
 
-3.  **建立虛擬環境並安裝依賴 (使用 uv)**：
+3.  **建立虛擬環境並同步依賴 (使用 uv)**：
     ```bash
     # 使用 uv 建立虛擬環境 (預設會建立在 .venv 資料夾)
     uv venv
@@ -67,44 +66,55 @@
     # 啟用虛擬環境 (Windows)
     .\.venv\Scripts\activate
 
-    # 使用 uv 安裝套件
-    uv pip install -r requirements.txt
+    # 根據 uv.lock 同步依賴
+    uv sync
     ```
 
 4.  **設定密鑰與環境變數**：
     ```bash
     # 複製模板檔案
-    cp data/secrets.yml.template data/secrets.yml
+    cp config/secrets.yml.template config/secrets.yml
     ```
-    接著，請開啟 `data/secrets.yml` 並填入您環境所需的設定值與帳號密碼。此檔案已被 `.gitignore` 忽略，不會被提交到版本庫中。
+    接著，請開啟 `config/secrets.yml` 並填入您環境所需的設定值與帳號密碼。此檔案已被 `.gitignore` 忽略，不會被提交到版本庫中。
 
 
 ## 使用方式
 
 ### 執行測試
 
-請先確保已啟用虛擬環境。此專案使用 `--env` 參數來指定要執行的測試環境。
+此專案使用 `--env` 參數來指定要執行的測試環境。您可以根據是否已啟用虛擬環境，選擇以下任一方式執行：
+
+*   **方式一：已啟用虛擬環境**
+    (需先執行 `.\.venv\Scripts\activate`)
+    ```bash
+    pytest [其他參數...]
+    ```
+
+*   **方式二：未啟用虛擬環境**
+    ```bash
+    uv run pytest [其他參數...]
+    ```
+
+**範例：**
 
 *   **執行 QA 環境的所有測試**：
-    由於 `pytest.ini` 已設定 `--alluredir`，執行測試時會自動產生 Allure 結果。
     ```bash
+    # 方式一
     pytest --env qa
+
+    # 方式二
+    uv run pytest --env qa
     ```
 
-*   **執行 Dev 環境的特定測試檔案**：
+*   **僅執行標記為 'scenario' 的情境測試**：
     ```bash
-    pytest --env dev testcases/scenario_test/test_player_info.py
-    ```
-
-*   **使用標記 (Marker) 執行特定類型的測試**：
-    您可以結合使用 `pytest.ini` 中定義的標記 (例如 `single`, `scenario`, `ws`) 來執行特定測試。
-    ```bash
-    # 僅執行標記為 'single' 的 API 測試
-    pytest --env qa -m single
-
-    # 執行所有標記為 'scenario' 的情境測試
+    # 方式一
     pytest --env qa -m scenario
+
+    # 方式二
+    uv run pytest --env qa -m scenario
     ```
+*註：兩種方式都會因為 `pytest.ini` 的設定而自動產生 Allure 測試結果。*
 
 ### 生成並查看 Allure 報告
 
@@ -117,24 +127,25 @@ allure open allure-report
 
 ### 配置檔案
 
-*   `data/secrets.yml`: 核心設定檔，用於存放所有環境的 URL、帳號密碼及其他敏感資訊。**此檔案不應被提交到 Git**。
-*   `data/secrets.yml.template`: `secrets.yml` 的模板檔案，定義了設定檔應有的結構。
+*   `config/secrets.yml`: 核心設定檔，用於存放所有環境的 URL、帳號密碼及其他敏感資訊。**此檔案不應被提交到 Git**。
+*   `config/secrets.yml.template`: `secrets.yml` 的模板檔案，定義了設定檔應有的結構。
 *   `test_data/*.yml`: 存放非敏感的、用於數據驅動的測試資料。
 
 ## 專案結構
 
 ```
-WD/
+pytest-demo/
 ├── api/                # 封裝 WebSocket 和 Restful API 請求和回應邏輯
-├── data/               # 數據與設定檔 (secrets.yml, secrets.yml.template)
+├── config/             # 環境設定檔 (secrets.yml, secrets.yml.template)
 ├── scripts/            # 工具腳本
 ├── testcases/          # 測試案例 (按模組劃分)
 ├── test_data/          # 測試案例所需的資料模型與生成邏輯
 ├── utils/              # 工具函數和基礎類
-├── allure_results/     # Allure 測試結果輸出目錄
+├── allure-results/     # Allure 測試結果輸出目錄
 ├── allure-report/      # 生成的 Allure 報告目錄
 ├── conftest.py         # Pytest fixture 和 hook 函數
 ├── pytest.ini          # Pytest 配置
-├── requirements.txt    # 專案依賴套件列表
+├── pyproject.toml      # 專案依賴與建置設定
+├── uv.lock             # 鎖定的依賴版本檔案
 └── .gitignore          # Git 忽略文件配置
 ```
