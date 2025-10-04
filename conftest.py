@@ -3,7 +3,7 @@ import platform
 import shutil
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable, Type, TypeVar
+from typing import Any, AsyncIterator, Callable, Type, TypedDict, TypeVar
 
 import allure
 import pytest
@@ -14,24 +14,37 @@ from api.auth import AuthAPI
 from test_data.common.expectations import HTTP
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
-from utils.config_loader import get_config, load_test_config
+from utils.config_loader import get_config, set_current_env
 
 logger = logging.getLogger(__name__)
 T = TypeVar('T')
+
+
+class UserDict(TypedDict):
+    account: str
+    password: str
 
 
 # --- Pytest Hooks ---
 
 
 def pytest_addoption(parser):
-    """定義 --env 命令列參數。"""
+    """為 pytest 新增 `--env` 命令列參數。
+
+    Args:
+        parser: pytest 的命令列參數解析器。
+    """
     parser.addoption('--env', default='qa', choices=['dev', 'qa'], help='environment parameter')
 
 
 def pytest_configure(config):
-    """在測試啟動時執行一次，讀取 --env 並將設定載入到全域變數中。"""
+    """在測試開始時，設定要使用的環境名稱
+
+    Args:
+        config: pytest 的設定物件。
+    """
     env = config.getoption('--env')
-    load_test_config(env)
+    set_current_env(env)
 
 
 # --- 核心 Fixtures ---
@@ -39,21 +52,27 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def test_config() -> dict:
-    """提供一個 session 範圍的設定資料。"""
+    """提供 session 範圍的測試設定檔內容。
+
+    Returns:
+        一個包含所有測試設定的字典。
+    """
     return get_config()
 
 
 @pytest.fixture(scope='session')
 def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
-    """
-    提供一個「使用者建立工廠」函式 (Fixture Factory Pattern)。
+    """提供一個用於建立測試使用者的工廠函式。
 
-    這個 fixture 將建立使用者所需的所有依賴 (auth_api, test_config) 包裝起來，
-    並回傳一個只需要傳入 `user_key` 的簡單函式。
-    這麼做是為了讓其他的 setup fixtures (如 setup_default_user) 變得更簡潔，
-    並將建立使用者的核心邏輯集中管理。
+    將建立使用者所需的 `auth_api` 和 `test_config` 依賴包裝起來，
+    回傳一個更簡單的函式，方便在各個 setup fixture 中重複使用。
 
-    :return: 一個可呼叫的工廠函式，簽名為 `(user_key: str) -> None`。
+    Args:
+        auth_api: 用於呼叫註冊 API 的 `AuthAPI` 物件。
+        test_config: 包含使用者設定的字典。
+
+    Returns:
+        一個工廠函式，接收 `user_key` 字串，用於建立指定的使用者。
     """
 
     def _creator(user_key: str):
@@ -80,45 +99,46 @@ def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_default_user(user_creator: Callable[[str], None]):
-    """
-    一個 session 範圍且自動執行的 fixture。
-
-    它的作用是在所有測試開始前，確保設定檔中定義的 'default_user'
-    已經被註冊，為大多數測試提供一個可用的預設帳號。
-    """
+    """在測試開始前，自動建立預設的測試帳號。"""
     logger.info('開始建立預設帳號...')
     user_creator('default_user')
 
 
 @pytest.fixture(scope='session')
 def setup_change_password_user(user_creator: Callable[[str], None]):
-    """
-    一個 session 範圍的 fixture，用於建立密碼變更測試所需的專用帳號。
-
-    注意：此 fixture **不會**自動執行。
-    只有當測試案例明確地將 `setup_change_password_user` 作為參數時，
-    它才會被觸發以建立指定的使用者。
-    """
+    """為密碼變更測試，建立專用的測試帳號。"""
     user_creator('change_password_user')
 
 
 @pytest.fixture(scope='session')
 def setup_duplicate_phone_user(user_creator: Callable[[str], None]):
-    """
-    一個 session 範圍的 fixture，用於建立手機綁定測試所需的專用帳號。
-    """
+    """為手機綁定測試，建立專用的測試帳號。"""
     user_creator('duplicate_phone_user')
 
 
 @pytest.fixture(scope='session')
 def shared_session() -> Generator[requests.Session, Any, None]:
+    """提供一個在整個測試 session 中共用的 `requests.Session` 物件。
+
+    Yields:
+        一個 `requests.Session` 物件，用於共用連線。
+    """
     session = requests.Session()
     yield session
     session.close()
 
 
 @pytest.fixture(scope='session')
-def api_factory(shared_session: requests.Session):
+def api_factory(shared_session: requests.Session) -> Callable:
+    """提供一個建立 API Client 的工廠函式。
+
+    Args:
+        shared_session: 共用的 `requests.Session` 物件。
+
+    Returns:
+        一個工廠函式，接收 `api_class` 與 `base_url`，用於建立 Client 物件。
+    """
+
     def _factory(api_class: Type[T], base_url: str) -> T:
         return api_class(base_url=base_url, session=shared_session)
 
@@ -127,12 +147,29 @@ def api_factory(shared_session: requests.Session):
 
 @pytest.fixture(scope='session')
 def shared_used_urls() -> set:
+    """提供一個共用集合，用於記錄所有在測試中使用過的 URL。
+
+    Returns:
+        一個 session 範圍的空集合。
+    """
     return set()
 
 
 @pytest.fixture(scope='session')
-def api_provider(api_factory, shared_used_urls, test_config: dict) -> ApiClientProvider:
-    """提供 ApiClientProvider 實例，直接從全域設定獲取 URLs。"""
+def api_provider(api_factory: Callable, shared_used_urls: set, test_config: dict) -> ApiClientProvider:
+    """提供 API Client 的中心服務提供者。
+
+    組合 `test_config` 的網址和 `api_factory` 的建立邏輯，
+    為測試提供獲取 API Client 的統一入口。
+
+    Args:
+        api_factory: 用於建立 API Client 物件的函式。
+        shared_used_urls: 用於記錄已使用 URL 的共用集合。
+        test_config: 包含所有測試設定的字典。
+
+    Returns:
+        一個已設定好的 `ApiClientProvider` 物件。
+    """
     env_urls = test_config.get('urls', {})
     return ApiClientProvider(api_factory, env_urls, shared_used_urls)
 
@@ -142,30 +179,45 @@ def api_provider(api_factory, shared_used_urls, test_config: dict) -> ApiClientP
 
 @pytest.fixture(scope='session')
 def auth_api(api_provider: ApiClientProvider) -> AuthAPI:
-    """
-    提供一個 session 生命週期的 AuthAPI 客戶端實例。
+    """提供一個 session 範圍的 `AuthAPI` 物件。
+
+    Args:
+        api_provider: API Client 的中心服務提供者。
+
+    Returns:
+        一個 `AuthAPI` 物件。
     """
     return api_provider.get(AuthAPI)
 
 
 @pytest.fixture
-def user_data(request: pytest.FixtureRequest, test_config: dict) -> dict:
-    """
-    根據 parametrize 或預設值提供使用者資料。
-    - 如果案例使用 parametrize (indirect=True)，則使用傳入的參數。
-    - 參數可以是 string (在 secrets.yml 中的 user key)。
-    - 參數可以是 dict (直接使用該使用者資料)。
-    - 否則，回傳 'default_user' 的資料。
+def user_data(request: pytest.FixtureRequest, test_config: dict) -> UserDict:
+    """根據測試參數或預設值，提供使用者資料。
+
+    此 fixture 支援透過 `@pytest.mark.parametrize` 間接傳入參數，並有以下處理邏輯：
+    - **當參數是字典 (dict):** 直接回傳該字典作為使用者資料，並驗證其格式。
+    - **當參數是字串 (str):** 將該字串視為 `user_key`，並從設定檔中查找對應的使用者資料。
+    - **當沒有參數時:** 回傳預設的 `default_user` 資料。
+
+    Args:
+        request: pytest 的 request 物件，用於獲取 `parametrize` 傳入的參數。
+        test_config: 包含所有使用者設定的字典。
+
+    Returns:
+        一個包含使用者帳號密碼的字典。
+
+    Raises:
+        pytest.fail: 如果傳入的 dict 格式錯誤，或找不到指定的使用者 key。
     """
     if hasattr(request, 'param'):
         param = request.param
         users = test_config['users']
 
         if isinstance(param, dict):
-            # 直接使用傳入的 dict
+            if 'account' not in param or 'password' not in param:
+                pytest.fail("parametrize dict key必須包含 'account' 和 'password'")
             return param
         elif isinstance(param, str):
-            # 使用傳入的 string 作為 key 查詢使用者
             user_key = param
             user = users.get(user_key)
             if not user:
@@ -181,7 +233,19 @@ def user_data(request: pytest.FixtureRequest, test_config: dict) -> dict:
 
 # --- 預登入 Fixtures ---
 @pytest.fixture
-def pre_login(user_data: dict, auth_api: AuthAPI) -> Generator[AuthAPI, None, None]:
+def pre_login(user_data: UserDict, auth_api: AuthAPI) -> Generator[AuthAPI, None, None]:
+    """為測試案例預先登入，並在 `AuthAPI` 物件中設定 token。
+
+    Args:
+        user_data: 使用者的帳號密碼資料。
+        auth_api: 用於執行登入的 `AuthAPI` 物件。
+
+    Yields:
+        一個已登入並包含 `Authorization` header 的 `AuthAPI` 物件。
+
+    Raises:
+        ValueError: 如果登入失敗或回傳結果中沒有 token。
+    """
     account, password = user_data['account'], user_data['password']
     with allure.step(f'前置步驟 => {account} 登入'):
         result = auth_api.login(account, password)
@@ -196,8 +260,19 @@ def pre_login(user_data: dict, auth_api: AuthAPI) -> Generator[AuthAPI, None, No
 
 
 @pytest_asyncio.fixture
-async def ws_connect(auth_api: AuthAPI, user_data: dict) -> AsyncIterator[AsyncBaseWS]:
-    """提供一個已連線的 ws 物件，並在測試後自動關閉。"""
+async def ws_connect(auth_api: AuthAPI, user_data: UserDict) -> AsyncIterator[AsyncBaseWS]:
+    """提供一個已連線的 WebSocket 物件。
+
+    Args:
+        auth_api: 用於登入以獲取 WebSocket URL 的 `AuthAPI` 物件。
+        user_data: 登入所需的使用者資料。
+
+    Yields:
+        一個已連線的 `AsyncBaseWS` 物件。
+
+    Raises:
+        ValueError: 如果登入後找不到 WebSocket URL。
+    """
     result = auth_api.login(user_data['account'], user_data['password'])
     ws_url = result.get('data', {}).get('ws_url')
     if not ws_url:
@@ -214,6 +289,13 @@ async def ws_connect(auth_api: AuthAPI, user_data: dict) -> AsyncIterator[AsyncB
 
 
 def write_allure_environment(environment_name: str, url: str, base_path: Path):
+    """將環境資訊寫入 Allure 報告用的 `environment.properties` 檔案。
+
+    Args:
+        environment_name: 當前測試環境的名稱 (例如 'qa', 'dev')。
+        url: 測試過程中使用的主要服務 URL。
+        base_path: 專案的根目錄路徑。
+    """
     allure_result_path = base_path / 'allure-results'
     source_executor_path = base_path / 'executor.json'
     allure_result_path.mkdir(parents=True, exist_ok=True)
@@ -228,6 +310,7 @@ def write_allure_environment(environment_name: str, url: str, base_path: Path):
 
 @pytest.fixture(scope='session', autouse=True)
 def allure_environment_setup(request: pytest.FixtureRequest, shared_used_urls: set):
+    """在測試 session 結束後，收集環境資訊並寫入 Allure 報告。"""
     yield
     env = request.config.getoption('--env')
     used_urls_str = ', '.join(sorted(list(shared_used_urls)))
@@ -239,12 +322,20 @@ def allure_environment_setup(request: pytest.FixtureRequest, shared_used_urls: s
 
 @pytest.fixture
 def test_case_setup_and_teardown():
+    """在每個測試案例執行前後，印出開始與結束的日誌。"""
     logger.info('*************** 開始執行測項 ***************')
     yield
     logger.info('*************** 結束執行測項 ***************')
 
 
 def pytest_collection_modifyitems(items):
+    """修改 pytest 收集到的所有測試案例。
+
+    主要用於自動為所有測試案例加上 `test_case_setup_and_teardown` fixture。
+
+    Args:
+        items: pytest 收集到的所有測試案例物件列表。
+    """
     for item in items:
         if 'test_case_setup_and_teardown' not in item.fixturenames:
             item.fixturenames.append('test_case_setup_and_teardown')

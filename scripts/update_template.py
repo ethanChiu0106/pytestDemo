@@ -1,10 +1,25 @@
+"""一個腳本，用於從 `secrets.yml` 產生一個已淨化的範本檔案。
+
+此腳本會讀取 `config/secrets.yml`，將其中的所有值替換為
+通用的佔位符 (例如 'your_string_value_here', 0)，然後將結果
+寫入 `config/secrets.yml.template`。
+
+這有助於保持範本檔案與實際設定檔的結構同步，同時避免洩漏敏感資訊。
+"""
 from pathlib import Path
 
 import yaml
 
 
 def sanitize_value(value):
-    """根據值的類型回傳一個佔位符。"""
+    """根據值的類型，回傳一個對應的佔位符
+
+    Args:
+        value: 原始值。
+
+    Returns:
+        一個無敏感資訊的佔位符。
+    """
     if isinstance(value, bool):
         return value
     if isinstance(value, str):
@@ -17,7 +32,14 @@ def sanitize_value(value):
 
 
 def sanitize_dict_recursively(data):
-    """遞迴地淨化一個字典。"""
+    """遞迴地淨化一個字典，將所有值替換為佔位符
+
+    Args:
+        data: 要淨化的字典。
+
+    Returns:
+        一個所有值都已被替換為佔位符的新字典。
+    """
     sanitized = {}
     for key, value in data.items():
         if isinstance(value, dict):
@@ -30,9 +52,10 @@ def sanitize_dict_recursively(data):
 
 
 def main():
-    """
-    讀取本地的 secrets.yml，產生一個不含敏感資訊的範本檔案
-    並覆寫 config/secrets.yml.template。
+    """執行腳本的主要邏輯
+
+    讀取 `secrets.yml`，產生一個不含敏感資訊的範本檔案，
+    並覆寫 `config/secrets.yml.template`。
     """
     project_root = Path(__file__).resolve().parent.parent
     config_dir = 'config'

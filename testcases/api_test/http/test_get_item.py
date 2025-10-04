@@ -25,5 +25,5 @@ class TestGetItem:
     def test_get_items(self, pre_login: AuthAPI, case: GetItemsCase, api_provider: ApiClientProvider):
         item_api = api_provider.get(ItemAPI)
         excepted = case.expected
-        actual_result = item_api.get_items()
+        actual_result = item_api.get_all_items()
         verify_case_auto(actual_result, excepted)
