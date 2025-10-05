@@ -15,6 +15,7 @@ dependencies = [
     "requests",
     "websockets",
     "pyhumps",
+    "pre-commit>=4.3.0",
 ]
 
 [tool.ruff]

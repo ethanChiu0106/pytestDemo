@@ -28,6 +28,7 @@
 *   **語言**：Python 3.11+
 *   **測試框架**：Pytest
 *   **環境與套件管理**：uv
+*   **開發流程輔助**：pre-commit
 *   **WebSocket 客戶端**：websockets
 *   **Restful API 客戶端**：requests
 *   **數據序列化**：msgpack
@@ -60,13 +61,7 @@
 
 3.  **建立虛擬環境並同步依賴 (使用 uv)**：
     ```bash
-    # 使用 uv 建立虛擬環境 (預設會建立在 .venv 資料夾)
-    uv venv
-
-    # 啟用虛擬環境 (Windows)
-    .\.venv\Scripts\activate
-
-    # 根據 uv.lock 同步依賴
+    # 根據 uv.lock 同步依賴並建立.venv
     uv sync
     ```
 
@@ -77,12 +72,17 @@
     ```
     接著，請開啟 `config/secrets.yml` 並填入您環境所需的設定值與帳號密碼。此檔案已被 `.gitignore` 忽略，不會被提交到版本庫中。
 
+5.  **安裝 Git 掛鉤 (Hook)**：
+    使用 `pre-commit` 來自動化維護任務。請安裝 Git 掛鉤以啟用此功能：
+    ```bash
+    uv run pre-commit install
+    ```
 
 ## 使用方式
 
 ### 執行測試
 
-此專案使用 `--env` 參數來指定要執行的測試環境。您可以根據是否已啟用虛擬環境，選擇以下任一方式執行：
+使用 `--env` 參數來指定要執行的測試環境。您可以根據是否已啟用虛擬環境，選擇以下任一方式執行：
 
 *   **方式一：已啟用虛擬環境**
     (需先執行 `.\.venv\Scripts\activate`)
@@ -124,6 +124,36 @@
 allure generate allure-results --clean -o allure-report
 allure open allure-report
 ```
+
+## 開發流程與 Pre-commit
+
+設定了一個 pre-commit 掛鉤，會在每次 `git commit` 時自動執行，以確保 `config/secrets.yml.template` 檔案與 `config/secrets.yml` 的結構保持同步。
+
+### 自動更新 `secrets.yml`
+
+當修改了 `config/secrets.yml` ，pre-commit 掛鉤會偵測到這個變動，並在 commit 時自動更新 `secrets.yml.template`。
+
+這個機制採用了 `pre-commit` 的流程：
+
+1.  `git commit` 時，掛鉤執行並修改了 `secrets.yml.template`。
+2.  `pre-commit` 會故意讓這次 commit **失敗**，提醒有檔案被自動修改了。
+3.  此時需要將被修改的 `secrets.yml.template` 手動 `git add`。
+4.  再次執行 `git commit`，這次就會成功。
+
+### 建議的順暢工作流程
+
+為了避免 commit 被中斷，建議採用以下流程：
+
+1.  在修改完程式碼和 `config/secrets.yml` 之後。
+2.  在執行 `git add` 之前，手動執行一次掛鉤：
+    ```bash
+    uv run pre-commit run update-secrets-template
+    ```
+3.  現在，一次性將所有變更加入暫存區：
+    ```bash
+    git add .
+    ```
+4.  執行 `git commit`，這次將會一次通過。
 
 ### 配置檔案
 
