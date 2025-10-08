@@ -9,7 +9,7 @@ import pytest
 
 from api.auth import AuthAPI
 from api.player import PlayerWS
-from test_data.scenario_test_data.user_profile_scenario import (
+from test_data.api_test_data.scenario.user_profile_scenario import (
     UserProfileScenarioCase,
     generate_user_profile_scenario_cases,
 )
