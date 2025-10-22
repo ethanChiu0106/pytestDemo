@@ -1,24 +1,24 @@
-# Pytest API 自動化測試框架
+# Pytest Web UI/API 自動化測試框架
 
 ## 簡介
 
-基於 Pytest 的自動化測試框架，專為驗證後端服務的 **WebSocket API** 和 **Restful API** 而設計。
+基於 Pytest 的自動化測試框架，專為驗證**Web UI**, **WebSocket API** 和 **Restful API** 而設計。
 
 ## 專案目的
 
-此框架主要處理 API 自動化測試覆蓋。它解決了以下核心問題：
-
-*   **WebSocket API 測試**：利用 `asyncio` 和 `websockets` 庫處理非同步通訊，並實作了智能化的請求-回應匹配機制，能夠精準篩選預期回應，有效避免非預期訊息（如廣播通知）的干擾。
-*   **Restful API 測試**：透過 `requests` 庫，提供 Restful API 請求發送與回應驗證能力。
+此框架主要前端、後端的自動化測試：
+*   **Web UI 測試**：整合 Playwright ，並採用 Page Object Model (POM) 設計模式。
+*   **WebSocket API 測試**：利用 `asyncio` 和 `websockets` 處理非同步通訊。
+*   **Restful API 測試**：透過 `requests` ，提供 Restful API 請求發送與回應驗證能力。
 *   **報告可讀性**：整合 Allure Report，生成豐富且易於分析的測試報告，幫助快速定位問題。
 *   **模組化與可維護性**：採用模組化設計，將 API 請求、測試數據和測試案例分離，便於擴展和維護。
 *   **集中式設定管理**：透過 `secrets.yml` 統一管理不同環境的設定與密鑰，提高安全性與配置彈性。
 
 ## 主要功能
-
-*   **非同步 WebSocket 測試**：支援 `async/await` 語法，高效處理 WebSocket 連線和訊息交換。
-*   **Restful API 測試**：使用 `requests` 庫，提供直觀的 HTTP 請求發送和回應處理。
-*   **Allure 報告整合**：自動生成詳細的測試執行報告，包含步驟、截圖（如果適用）和環境信息。
+*   **UI 自動化**：使用 Playwright 進行跨瀏覽器 Web 測試。
+*   **非同步 WebSocket 測試**：支援 `async/await` 語法，處理 WebSocket 連線和訊息交換。
+*   **Restful API 測試**：使用 `requests` 庫，提供 HTTP 請求發送和回應處理。
+*   **Allure 報告整合**：自動生成詳細的測試執行報告，包含步驟和環境信息。
 *   **動態數據驅動**：測試資料由 test_data 目錄下的 Python 產生器動態生成。
 *   **模組化 API 封裝**：將複雜的 API 請求邏輯封裝在獨立的類別中，簡化測試案例編寫。
 *   **環境特定設定**：透過命令列參數切換不同的測試環境（如 QA, Dev）。
@@ -29,6 +29,7 @@
 *   **測試框架**：Pytest
 *   **環境與套件管理**：uv
 *   **開發流程輔助**：pre-commit
+*   **Web UI 測試**：Playwright
 *   **WebSocket 客戶端**：websockets
 *   **Restful API 客戶端**：requests
 *   **數據序列化**：msgpack
@@ -47,9 +48,8 @@
 
 ### 步驟
 
-1.  **克隆專案**：
+1.  **clone 後進入專案**：
     ```bash
-    git clone <your-repository-url>
     cd pytest-demo
     ```
 
@@ -64,15 +64,18 @@
     # 根據 uv.lock 同步依賴並建立.venv
     uv sync
     ```
-
-4.  **設定密鑰與環境變數**：
+4. **安裝 Playwright 瀏覽器核心**：
+    ```bash
+    uv run playwright install
+    ```
+5.  **設定密鑰與環境變數**：
     ```bash
     # 複製模板檔案
     cp config/secrets.yml.template config/secrets.yml
     ```
     接著，請開啟 `config/secrets.yml` 並填入您環境所需的設定值與帳號密碼。此檔案已被 `.gitignore` 忽略，不會被提交到版本庫中。
 
-5.  **安裝 Git 掛鉤 (Hook)**：
+6.  **安裝 Git 掛鉤 (Hook)**：
     使用 `pre-commit` 來自動化維護任務。請安裝 Git 掛鉤以啟用此功能：
     ```bash
     uv run pre-commit install
@@ -81,40 +84,38 @@
 ## 使用方式
 
 ### 執行測試
+⚠️ **重要提示：關於 API 測試案例的執行環境**
 
-使用 `--env` 參數來指定要執行的測試環境。您可以根據是否已啟用虛擬環境，選擇以下任一方式執行：
+目前 **API 測試案例** (包括 HTTP 和 WebSocket) 是針對**自架的簡易後端 Server** 所設計和驗證的。
 
-*   **方式一：已啟用虛擬環境**
-    (需先執行 `.\.venv\Scripts\activate`)
-    ```bash
-    pytest [其他參數...]
-    ```
+**若要直接執行這些 API 相關的測試案例** (例如使用 `-m http`, `-m ws`, `-m scenario` 或執行所有測試)，需**先下載並啟用該 Server**。
 
-*   **方式二：未啟用虛擬環境**
-    ```bash
-    uv run pytest [其他參數...]
-    ```
+**Server 專案連結：** [`mock-server`](<https://github.com/ethanChiu0106/mockServer>)。
+
+---
+使用 `--env` 參數來指定要執行的測試環境。
 
 **範例：**
 
-*   **執行 QA 環境的所有測試**：
+*   **執行 QA 環境的所有測試(API + UI)**：
     ```bash
-    # 方式一
-    pytest --env qa
-
-    # 方式二
     uv run pytest --env qa
     ```
 
-*   **僅執行標記為 'scenario' 的情境測試**：
+*   **僅執行 UI 情境測試**：
     ```bash
-    # 方式一
-    pytest --env qa -m scenario
-
-    # 方式二
-    uv run pytest --env qa -m scenario
+    uv run pytest --env qa -m ui_scenario
     ```
-*註：兩種方式都會因為 `pytest.ini` 的設定而自動產生 Allure 測試結果。*
+
+*   **僅執行 API 的 HTTP 測試**：
+    ```bash
+    uv run pytest --env qa -m http
+    ```
+
+*   **執行所有 API 測試 (HTTP + WS)**：
+    ```bash
+    uv run pytest --env qa -m "http or ws"
+    ```
 
 ### 生成並查看 Allure 報告
 
@@ -159,22 +160,26 @@ allure open allure-report
 
 *   `config/secrets.yml`: 核心設定檔，用於存放所有環境的 URL、帳號密碼及其他敏感資訊。**此檔案不應被提交到 Git**。
 *   `config/secrets.yml.template`: `secrets.yml` 的模板檔案，定義了設定檔應有的結構。
-*   `test_data/*.yml`: 存放非敏感的、用於數據驅動的測試資料。
 
 ## 專案結構
 
 ```
 pytest-demo/
-├── api/                # 封裝 WebSocket 和 Restful API 請求和回應邏輯
+├── api/                # 封裝 WebSocket 和 Restful API 請求邏輯 
+├── pages/              # 封裝 UI 測試的 Page Object Model (POM) 
 ├── config/             # 環境設定檔 (secrets.yml, secrets.yml.template)
-├── scripts/            # 工具腳本
-├── testcases/          # 測試案例 (按模組劃分)
+├── scripts/            # 工具腳本 (例如 pre-commit用的)
+├── testcases/          # 測試案例
+│   ├── api_test/       # API 測試 (HTTP, WS, Scenario)
+│   └── ui_test/        # UI 測試 (Single Page, Scenario)
 ├── test_data/          # 測試案例所需的資料模型與生成邏輯
-├── utils/              # 工具函數和基礎類
+│   ├── api_test_data/  # API 測試資料 (HTTP, WS, Scenario)
+│   └── ui_test_data/   # UI 測試資料 (Login, Purchase)
+├── utils/              # 工具函數和基礎類 (ConfigLoader, BaseRequest, Allure utils 等)
 ├── allure-results/     # Allure 測試結果輸出目錄
 ├── allure-report/      # 生成的 Allure 報告目錄
-├── conftest.py         # Pytest fixture 和 hook 函數
-├── pytest.ini          # Pytest 配置
+├── conftest.py         # Pytest fixture 和 hook 函數 (根目錄)
+├── pytest.ini          # Pytest 配置 (包含 markers )
 ├── pyproject.toml      # 專案依賴與建置設定
 ├── uv.lock             # 鎖定的依賴版本檔案
 └── .gitignore          # Git 忽略文件配置
