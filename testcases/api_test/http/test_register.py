@@ -11,8 +11,8 @@ class TestRegister:
     @pytest.mark.parametrize('case', generate_register_cases())
     def test_register(self, case: RegisterCase, auth_api: AuthAPI):
         request = case.request
-        excepted = case.expected
+        expected = case.expected
         account = request.account
         password = request.password
         actual_result = auth_api.register(account, password)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

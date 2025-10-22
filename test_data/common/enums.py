@@ -15,6 +15,8 @@ class PytestMark(Enum):
     NEGATIVE = 'negative'
     SINGLE = 'single'
     SCENARIO = 'scenario'
+    UI_SINGLE = 'ui_single'
+    UI_SCENARIO = 'ui_scenario'
     SKIP = 'skip'
 
 

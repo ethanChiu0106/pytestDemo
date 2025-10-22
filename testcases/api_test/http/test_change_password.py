@@ -21,7 +21,7 @@ def password_change_session(pre_login: AuthAPI, request):
     case: ChangePasswordCase = request.node.callspec.params.get('case')
     if case and 'change_password_success' in request.node.callspec.id:
         # 從 request 中找出是哪個 user key 被用於 pre_login
-        user_key = request.node.callspec.params.get('pre_login', 'default_user')
+        user_key = request.node.callspec.params.get('user_data', 'default_user')
         secrets = get_config()
         original_password = secrets['users'][user_key]['password']
         new_password = case.request.new_password
@@ -41,8 +41,8 @@ class TestChangePassword:
     ):
         auth_api = password_change_session
         request = case.request
-        excepted = case.expected
+        expected = case.expected
         old = request.old_password
         new = request.new_password
         actual_result = auth_api.change_password(old, new)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

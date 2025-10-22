@@ -20,8 +20,6 @@ from utils.case_verify_tool import verify_case_auto
 logger = logging.getLogger(__name__)
 
 
-@allure.epic('情境測試')
-@allure.feature('使用者個人資料完整流程')
 class TestUserProfileScenario:
     @pytest.mark.parametrize('case', generate_user_profile_scenario_cases())
     @pytest.mark.asyncio

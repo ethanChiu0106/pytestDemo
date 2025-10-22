@@ -15,17 +15,17 @@ class TestItemWS:
     async def test_get_item_ws(self, ws_connect: AsyncBaseWS, case: GetItemWsCase):
         item_ws_api = ItemWS(ws_connect)
         item_id = case.request.item_id
-        excepted = case.expected
+        expected = case.expected
 
         actual_result = await item_ws_api.get_item_by_id(item_id)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)
 
     @allure_from_case
     @pytest.mark.parametrize('case', generate_get_items_cases())
     @pytest.mark.asyncio
     async def test_get_items_ws(self, ws_connect: AsyncBaseWS, case: GetItemsCase):
         item_ws_api = ItemWS(ws_connect)
-        excepted = case.expected
+        expected = case.expected
 
         actual_result = await item_ws_api.get_all_items()
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

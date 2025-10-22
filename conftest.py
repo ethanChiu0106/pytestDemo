@@ -3,7 +3,6 @@ import platform
 import shutil
 from pathlib import Path
 
-import allure
 import pytest
 
 from utils.config_loader import get_config, set_current_env
@@ -110,8 +109,3 @@ def pytest_collection_modifyitems(items):
     for item in items:
         if 'test_case_setup_and_teardown' not in item.fixturenames:
             item.fixturenames.append('test_case_setup_and_teardown')
-
-        # 根據資料夾路徑，只在 api_test 中執行 setup_default_user
-        if 'api_test' in item.path.parts:
-            if 'setup_default_user' not in item.fixturenames:
-                item.fixturenames.append('setup_default_user')

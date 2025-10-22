@@ -14,6 +14,6 @@ class TestUpdateName:
     async def test_update_name(self, ws_connect: AsyncBaseWS, case: UpdateNameCase):
         player = PlayerWS(ws_connect)
         new_name = case.request.name
-        excepted = case.expected
+        expected = case.expected
         actual_result = await player.update_name(new_name)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

@@ -8,13 +8,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-# --- 模組級別變數 ---
 _CURRENT_ENV: str | None = None
 logger = logging.getLogger(__name__)
 BASE_PATH = Path(__file__).resolve().parent.parent
-
-
-# --- 公開函式 ---
 
 
 def set_current_env(env: str):

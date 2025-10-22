@@ -16,6 +16,7 @@ dependencies = [
     "websockets",
     "pyhumps",
     "pre-commit>=4.3.0",
+    "pytest-playwright>=0.7.1",
 ]
 
 [tool.ruff]

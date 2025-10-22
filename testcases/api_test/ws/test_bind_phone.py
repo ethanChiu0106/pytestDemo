@@ -52,6 +52,6 @@ class TestBindPhone:
     async def test_bind_phone(self, ws_connect: AsyncBaseWS, case: BindPhoneCase):
         player = PlayerWS(ws_connect)
         phone = case.request.telephone
-        excepted = case.expected
+        expected = case.expected
         actual_result = await player.bind_phone(phone)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

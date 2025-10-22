@@ -15,6 +15,18 @@ from .enums import PytestMark
 # 初始化 Faker
 fake = Faker('zh_TW')
 
+PYTEST_MARKS_MAP = {member: getattr(pytest.mark, member.value) for member in PytestMark}
+
+ALLURE_TAGS_MAP = {
+    'parent_suite': allure.parent_suite,
+    'suite': allure.suite,
+    'sub_suite': allure.sub_suite,
+    'epic': allure.epic,
+    'feature': allure.feature,
+    'story': allure.story,
+    'severity': lambda severity: allure.severity(severity.value),
+}
+
 
 def generate_accounts(num, min_len=5, max_len=20):
     """
@@ -39,31 +51,17 @@ def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.par
 
     # --- 處理 Pytest 標籤 ---
     if hasattr(case, 'marks') and case.marks:
-        marks_map = {member: getattr(pytest.mark, member.value) for member in PytestMark}
-
         for mark_enum in case.marks:
-            mark_obj = marks_map.get(mark_enum)
+            mark_obj = PYTEST_MARKS_MAP.get(mark_enum)
             if mark_obj:
                 all_marks.append(mark_obj)
 
     # --- 處理 Allure 標籤 ---
     if isinstance(case, AllureCase):
-        # 處理標準的 allure 標籤，如 story, feature 等
-        allure_tags_map = {
-            'parent_suite': allure.parent_suite,
-            'suite': allure.suite,
-            'sub_suite': allure.sub_suite,
-            'epic': allure.epic,
-            'feature': allure.feature,
-            'story': allure.story,
-        }
-        for key, allure_marker in allure_tags_map.items():
+        for key, allure_marker_func in ALLURE_TAGS_MAP.items():
             value = getattr(case, key, None)
             if value:
-                all_marks.append(allure_marker(value))
-
-        if hasattr(case, 'severity') and case.severity:
-            all_marks.append(allure.severity(case.severity.value))
+                all_marks.append(allure_marker_func(value))
 
     # 使用案例的 title 或提供的 id 作為測試案例的 ID
     case_id = id or getattr(case, 'title', 'N/A')

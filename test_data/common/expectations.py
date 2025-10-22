@@ -13,6 +13,11 @@ def _ws_error_expectation(error_code: int) -> dict:
     return {'error_code': error_code, 'success': False}
 
 
+def _ui_expectation(success: bool, error_message: str | None) -> dict:
+    """建立 UI 預期結果"""
+    return {'success': success, 'error_message': error_message}
+
+
 class HTTP:
     """包含所有 HTTP 相關的預期結果"""
 
@@ -125,3 +130,29 @@ class WebSocket:
     class Item:
         ITEM_ID_NOT_PROVIDED = _ws_error_expectation(3009)
         ITEM_NOT_FOUND = _ws_error_expectation(3010)
+
+
+class UI:
+    """包含所有 UI 相關的預期結果"""
+
+    INVENTORY_URL_REGEX = '.*inventory.html'
+
+    class Login:
+        """登入頁面相關的預期結果"""
+
+        SUCCESS = _ui_expectation(True, None)
+        LOGIN_FAIL = _ui_expectation(False, 'Epic sadface: Username and password do not match any user in this service')
+        EMPTY_USERNAME = _ui_expectation(False, 'Epic sadface: Username is required')
+        EMPTY_PASSWORD = _ui_expectation(False, 'Epic sadface: Password is required')
+
+    class Purchase:
+        """購買流程相關的預期結果和常量"""
+
+        # Product
+        PURCHASE_QUANTITY = '1'
+
+        # URL Reg
+        CART_URL_REGEX = '.*cart.html'
+        CHECKOUT_STEP_ONE_URL_REGEX = '.*checkout-step-one.html'
+        CHECKOUT_STEP_TWO_URL_REGEX = '.*checkout-step-two.html'
+        CHECKOUT_COMPLETE_URL_REGEX = '.*checkout-complete.html'

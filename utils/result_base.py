@@ -1,4 +1,5 @@
 """提供一個用於標準化 API 回應的基礎類別"""
+
 from typing import Union
 
 import humps
@@ -17,8 +18,7 @@ class ResultBase:
         """初始化 ResultBase
 
         Args:
-            response: 原始的 API 回應，可以是一個 `requests.Response` 物件，
-                      或是一個已解析的字典。
+            response: 原始的 API 回應，可以是一個 `requests.Response` 物件或是一個已解析的字典。
         """
         self.response = response
         self.result = {}

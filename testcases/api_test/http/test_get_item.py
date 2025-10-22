@@ -15,15 +15,15 @@ class TestGetItem:
     def test_get_item(self, pre_login: AuthAPI, case: GetItemCase, api_provider: ApiClientProvider):
         item_api = api_provider.get(ItemAPI)
         request = case.request
-        excepted = case.expected
+        expected = case.expected
         item_id = request.item_id
         actual_result = item_api.get_item(item_id)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)
 
     @allure_from_case
     @pytest.mark.parametrize('case', generate_get_items_cases())
     def test_get_items(self, pre_login: AuthAPI, case: GetItemsCase, api_provider: ApiClientProvider):
         item_api = api_provider.get(ItemAPI)
-        excepted = case.expected
+        expected = case.expected
         actual_result = item_api.get_all_items()
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

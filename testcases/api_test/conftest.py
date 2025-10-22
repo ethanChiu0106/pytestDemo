@@ -23,9 +23,9 @@ class UserDict(TypedDict):
 # --- Core API Fixtures ---
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def shared_session() -> Generator[requests.Session, Any, None]:
-    """提供一個在整個測試 session 中共用的 `requests.Session` 物件。
+    """提供一個在整個測試 package 中共用的 `requests.Session` 物件。
 
     Yields:
         一個 `requests.Session` 物件，用於共用連線。
@@ -35,16 +35,16 @@ def shared_session() -> Generator[requests.Session, Any, None]:
     session.close()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def api_provider(shared_session: requests.Session, shared_used_urls: set, test_config: dict) -> ApiClientProvider:
-    """提供一個 session 等級、已設定好的 API Client 提供者。
+    """提供一個 package 等級、已設定好的 API Client 提供者。
 
     組裝 `ApiClientProvider` 所需的所有依賴，包含共用的 `requests.Session`、
     從設定檔讀取的 URLS，以及用於 Allure 報告的 `shared_used_urls` 集合。
     此 fixture 作為所有 API 測試的統一入口，確保所有 API Client 都透過一致的方式建立和管理。
 
     Args:
-        shared_session: 整個測試 session 中共用的 `requests.Session` 物件。
+        shared_session: 整個測試 package 中共用的 `requests.Session` 物件。
         shared_used_urls: 用於記錄所有被呼叫過的 URL 的集合，以產生 Allure 報告。
         test_config: 已根據環境 (--env) 讀取並解析的設定檔內容。
 
@@ -56,9 +56,9 @@ def api_provider(shared_session: requests.Session, shared_used_urls: set, test_c
     return ApiClientProvider(shared_session, env_urls, shared_used_urls)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def auth_api(api_provider: ApiClientProvider) -> AuthAPI:
-    """提供一個 session 範圍的 `AuthAPI` 物件。
+    """提供一個 package 範圍的 `AuthAPI` 物件。
 
     Args:
         api_provider: API Client 的中心服務提供者。
@@ -169,7 +169,7 @@ async def ws_connect(auth_api: AuthAPI, user_data: UserDict) -> AsyncIterator[As
 # --- User Creation Fixtures (Original content) ---
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
     """提供一個用於建立測試使用者的工廠函式。
 
@@ -201,20 +201,20 @@ def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
     return _creator
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope='package', autouse=True)
 def setup_default_user(user_creator: Callable[[str], None]):
     """在測試開始前，自動為 API 測試建立預設的測試帳號。"""
     logger.info('開始為 API 測試建立預設帳號...')
     user_creator('default_user')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def setup_change_password_user(user_creator: Callable[[str], None]):
     """為密碼變更測試，建立專用的測試帳號。"""
     user_creator('change_password_user')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='package')
 def setup_duplicate_phone_user(user_creator: Callable[[str], None]):
     """為手機綁定測試，建立專用的測試帳號。"""
     user_creator('duplicate_phone_user')

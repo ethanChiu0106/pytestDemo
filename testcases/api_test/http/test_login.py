@@ -11,8 +11,8 @@ class TestLogin:
     @allure_from_case
     def test_login(self, case: LoginCase, auth_api: AuthAPI):
         request = case.request
-        excepted = case.expected
+        expected = case.expected
         account = request.account
         password = request.password
         actual_result = auth_api.login(account, password)
-        verify_case_auto(actual_result, excepted)
+        verify_case_auto(actual_result, expected)

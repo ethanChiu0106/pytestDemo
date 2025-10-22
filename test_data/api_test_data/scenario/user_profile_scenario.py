@@ -33,7 +33,7 @@ class UserProfileScenarioRequest:
 class UserProfileScenarioCase(AllureCase, TestCaseData[UserProfileScenarioRequest]):
     """使用者個人資料場景的測試案例"""
 
-    parent_suite: str = '情境測試'
+    parent_suite: str = 'API 情境測試'
     suite: str = '使用者個人資料'
     epic: str = '使用者個人資料完整流程'
     feature: str = '從註冊到變更資料'
@@ -53,9 +53,12 @@ def generate_user_profile_scenario_cases() -> list:
     case_definition = {
         'id': 'user_profile_full_scenario',
         'story': '使用者個人資料完整流程',
-        'sub_suite': '完整流程',
+        'sub_suite': '使用者流程',
         'title': '從註冊到變更密碼的完整使用者流程',
-        'description': '依序測試 1.註冊 -> 2.登入 -> 3.驗證初始資料 -> 4.變更名稱後驗證名稱 -> 5.變更密碼 -> 6.驗證新密碼 -> 7.還原密碼',
+        'description': (
+            '依序測試 1.註冊 -> 2.登入 -> 3.驗證初始資料 -> 4.變更名稱後驗證名稱 -> '
+            '5.變更密碼 -> 6.驗證新密碼 -> 7.還原密碼'
+        ),
         'request_data': UserProfileScenarioRequest(
             account=account,
             initial_password=initial_password,
