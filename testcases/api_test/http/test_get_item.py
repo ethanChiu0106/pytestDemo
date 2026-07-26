@@ -3,13 +3,11 @@ import pytest
 from api.item import ItemAPI
 from test_data.api_test_data.http.get_item import GetItemCase, generate_get_item_cases
 from test_data.api_test_data.http.get_items import GetItemsCase, generate_get_items_cases
-from utils.allure_utils import allure_from_case
 from utils.api_provider import ApiClientProvider
 from utils.case_verify_tool import verify_case_auto
 
 
 class TestGetItem:
-    @allure_from_case
     @pytest.mark.parametrize('case', generate_get_item_cases())
     def test_get_item(self, authed_api: ApiClientProvider, case: GetItemCase):
         item_api = authed_api.get(ItemAPI)
@@ -19,7 +17,6 @@ class TestGetItem:
         actual_result = item_api.get_item(item_id)
         verify_case_auto(actual_result, expected)
 
-    @allure_from_case
     @pytest.mark.parametrize('case', generate_get_items_cases())
     def test_get_items(self, authed_api: ApiClientProvider, case: GetItemsCase):
         item_api = authed_api.get(ItemAPI)

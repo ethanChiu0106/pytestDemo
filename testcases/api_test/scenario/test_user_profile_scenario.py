@@ -13,7 +13,6 @@ from test_data.api_test_data.scenario.user_profile_scenario import (
     UserProfileScenarioCase,
     generate_user_profile_scenario_cases,
 )
-from utils.allure_utils import allure_from_case
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import verify_case_auto
@@ -24,7 +23,6 @@ logger = logging.getLogger(__name__)
 class TestUserProfileScenario:
     @pytest.mark.parametrize('case', generate_user_profile_scenario_cases())
     @pytest.mark.asyncio
-    @allure_from_case
     async def test_user_profile_scenario(self, case: UserProfileScenarioCase, api_provider: ApiClientProvider):
         # 註冊與登入本身不需授權，使用匿名的 client
         auth_api = api_provider.get(AuthAPI)

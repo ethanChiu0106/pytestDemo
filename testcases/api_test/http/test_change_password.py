@@ -2,7 +2,6 @@ import pytest
 
 from api.auth import AuthAPI
 from test_data.api_test_data.http.change_password import ChangePasswordCase, generate_change_password_cases
-from utils.allure_utils import allure_from_case
 from utils.api_provider import ApiClientProvider
 from utils.case_verify_tool import verify_case_auto
 from utils.config_loader import get_config
@@ -35,7 +34,6 @@ def password_change_session(authed_api: ApiClientProvider, request):
 @pytest.mark.parametrize('user_data', ['change_password_user'], indirect=True)
 @pytest.mark.parametrize('case', generate_change_password_cases())
 class TestChangePassword:
-    @allure_from_case
     def test_change_password(
         self, password_change_session: AuthAPI, case: ChangePasswordCase, setup_change_password_user
     ):

@@ -7,14 +7,12 @@ from playwright.sync_api import Page
 from pages.login_page import LoginPage
 from test_data.common.expectations import UI
 from test_data.ui_test_data.single.login import UILoginCase, generate_ui_login_cases
-from utils.allure_utils import allure_from_case
 
 logger = logging.getLogger(__name__)
 
 
 class TestLoginPage:
     @pytest.mark.parametrize('case', generate_ui_login_cases())
-    @allure_from_case
     def test_login(self, page: Page, case: UILoginCase):
         login_page = LoginPage(page)
 

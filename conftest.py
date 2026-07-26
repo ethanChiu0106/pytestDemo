@@ -3,6 +3,7 @@ import platform
 import shutil
 from pathlib import Path
 
+import allure
 import pytest
 
 from utils.config_loader import get_config, set_current_env
@@ -30,6 +31,28 @@ def pytest_configure(config):
     """
     env = config.getoption('--env')
     set_current_env(env)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    """將 parametrize 傳入的 case 物件上的 title 與 description 套用到 Allure 報告。
+
+    這兩個標籤無法透過 `create_param_from_case` 隨其他標籤一起掛上：
+    `allure.title` 不是 MarkDecorator，不能當作 pytest.param 的 mark。
+    而 `allure.dynamic` 必須在 **call 階段**呼叫才會生效——寫成 fixture (setup 階段)
+    不會有作用，因此才用 hookwrapper。此寫法對 sync 與 async 測試皆適用。
+
+    Args:
+        item: 當前執行的測試項目。僅處理參數名為 `case` 的 parametrize。
+    """
+    callspec = getattr(item, 'callspec', None)
+    case = callspec.params.get('case') if callspec else None
+    if case is not None:
+        if getattr(case, 'title', None):
+            allure.dynamic.title(case.title)
+        if getattr(case, 'description', None):
+            allure.dynamic.description(case.description)
+    yield
 
 
 # --- 核心 Fixtures ---

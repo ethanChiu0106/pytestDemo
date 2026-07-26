@@ -10,14 +10,12 @@ from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 from test_data.common.expectations import UI
 from test_data.ui_test_data.scenario.purchase import UIPurchaseCase, generate_ui_purchase_cases
-from utils.allure_utils import allure_from_case
 
 logger = logging.getLogger(__name__)
 
 
 class TestProductPurchase:
     @pytest.mark.parametrize('case', generate_ui_purchase_cases())
-    @allure_from_case
     def test_purchase_a_product_successfully(self, page: Page, case: UIPurchaseCase):
         """測試一個完整的商品購買流程。"""
         login_page = LoginPage(page)
