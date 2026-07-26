@@ -4,7 +4,7 @@
 
 from dataclasses import dataclass
 
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
 from test_data.common.helpers import create_param_from_case
@@ -18,8 +18,10 @@ class GetItemRequest:
 
 
 @dataclass
-class GetItemCase(AllureCase, TestCaseData[GetItemRequest]):
+class GetItemCase(TestCaseData[GetItemRequest]):
     """獲取物品 API 的測試案例"""
+
+    expected: Expectation
 
     parent_suite: str = 'HTTP API 測試'
     suite: str = '物品'

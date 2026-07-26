@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from faker import Faker
 
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP, WebSocket
 from test_data.common.helpers import create_param_from_case, generate_accounts
@@ -30,7 +30,7 @@ class UserProfileScenarioRequest:
 
 
 @dataclass
-class UserProfileScenarioCase(AllureCase, TestCaseData[UserProfileScenarioRequest]):
+class UserProfileScenarioCase(TestCaseData[UserProfileScenarioRequest]):
     """使用者個人資料場景的測試案例"""
 
     parent_suite: str = 'API 情境測試'

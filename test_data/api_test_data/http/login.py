@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from faker import Faker
 
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
 from test_data.common.helpers import create_param_from_case, generate_accounts
@@ -25,8 +25,10 @@ class LoginRequest:
 
 
 @dataclass
-class LoginCase(AllureCase, TestCaseData[LoginRequest]):
+class LoginCase(TestCaseData[LoginRequest]):
     """登入 API 的測試案例"""
+
+    expected: Expectation
 
     parent_suite: str = 'HTTP API 測試'
     suite: str = '登入'

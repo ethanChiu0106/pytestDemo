@@ -5,7 +5,7 @@
 from dataclasses import dataclass
 
 from api.ws_constants import ItemFlow, OpCode
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import WebSocket
 from test_data.common.helpers import create_param_from_case, create_ws_expectation
@@ -19,8 +19,10 @@ class GetItemsRequest:
 
 
 @dataclass
-class GetItemsCase(AllureCase, TestCaseData[GetItemsRequest]):
+class GetItemsCase(TestCaseData[GetItemsRequest]):
     """透過 WS 獲取所有物品的測試案例"""
+
+    expected: Expectation
 
     parent_suite: str = 'WebSocket 測試'
     suite: str = '獲取物品'

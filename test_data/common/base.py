@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Generic, List, Optional, Protocol, TypeVar
-
+from typing import Generic, List, Optional, TypedDict, TypeVar
 
 from .enums import AllureSeverity, PytestMark
 
@@ -8,51 +7,40 @@ from .enums import AllureSeverity, PytestMark
 RequestType = TypeVar('RequestType')
 
 
+class Expectation(TypedDict, total=False):
+    """單一次 API 回應的預期結果，供 `verify_case_auto` 使用。
+
+    - result: 預期的欄位值，只比對此處列出的鍵
+    - schema: 預期的巢狀結構與型別
+
+    情境測試的 expected 是 `dict[str, Expectation]` (以步驟名為鍵)；
+    UI 測試不經過 `verify_case_auto`，有自己的預期結構。
+    """
+
+    result: dict
+    schema: dict
+
+
 @dataclass
 class TestCaseData(Generic[RequestType]):
-    """測試案例的核心資料 (請求、預期結果等)"""
+    """一個測試案例的完整定義：測試資料本身，加上 Allure 報告用的分類標籤。
 
-    request: Optional[RequestType]
-    expected: Dict[str, Any]
-    marks: List[PytestMark]
+    分類標籤之所以放在案例上而非測試函式上，是因為這些測試都是 data-driven 的——
+    同一個測試函式會跑出多個案例，每個案例在報告中需要各自的標題與階層。
+    """
 
-
-@dataclass
-class AllureCase:
-    """基礎測試案例，包含用於 Allure 報告的分類標籤"""
-
-    # 沒有預設值的欄位必須在前面
+    # --- 沒有預設值的欄位必須在前面 ---
     title: str
     description: str
     sub_suite: str
     story: str
+    request: Optional[RequestType]
+    expected: dict
+    marks: List[PytestMark]
     parent_suite: str
     suite: str
     epic: str
     feature: str
 
-    # 有預設值的欄位必須在後面
-    severity: AllureSeverity = AllureSeverity.NORMAL  # 使用自訂的 Enum
-
-
-class CombinedTestCase(Protocol[RequestType]):
-    """
-    一個 Protocol，定義了 create_param_from_case 所期望的組合介面。
-    它明確列出了來自 TestCaseData 和 AllureCase 的所有屬性，以提供精確的型別提示。
-    """
-
-    # 來自 TestCaseData 的屬性
-    request: Optional[RequestType]
-    expected: Dict[str, Any]
-    marks: List[PytestMark]
-
-    # 來自 AllureCase 的屬性
-    title: str
-    description: str
-    parent_suite: str
-    suite: str
-    sub_suite: str
-    epic: str
-    feature: str
-    story: str
-    severity: AllureSeverity
+    # --- 有預設值的欄位必須在後面 ---
+    severity: AllureSeverity = AllureSeverity.NORMAL

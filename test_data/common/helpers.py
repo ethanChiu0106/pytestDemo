@@ -9,7 +9,7 @@ import allure
 import pytest
 from faker import Faker
 
-from .base import AllureCase, CombinedTestCase
+from .base import TestCaseData
 from .enums import PytestMark
 
 # 初始化 Faker
@@ -42,26 +42,29 @@ def generate_accounts(num, min_len=5, max_len=20):
     return accounts
 
 
-def create_param_from_case(case: CombinedTestCase, id: str = None) -> pytest.param:
+def create_param_from_case(case: TestCaseData, id: str = None) -> pytest.param:
     """
     將一個測試案例的 dataclass 物件轉換為 pytest.param 物件，
     並使用型別安全的 Enum 動態地附加 pytest 和 allure 的標籤。
+
+    註：`title` 與 `description` 不在此處理——`allure.title` 不是 MarkDecorator，
+    無法作為 pytest.param 的 mark。兩者改由根 conftest.py 的 `pytest_runtest_call`
+    hook 在 call 階段套用。
     """
     all_marks = []
 
     # --- 處理 Pytest 標籤 ---
-    if hasattr(case, 'marks') and case.marks:
+    if case.marks:
         for mark_enum in case.marks:
             mark_obj = PYTEST_MARKS_MAP.get(mark_enum)
             if mark_obj:
                 all_marks.append(mark_obj)
 
     # --- 處理 Allure 標籤 ---
-    if isinstance(case, AllureCase):
-        for key, allure_marker_func in ALLURE_TAGS_MAP.items():
-            value = getattr(case, key, None)
-            if value:
-                all_marks.append(allure_marker_func(value))
+    for key, allure_marker_func in ALLURE_TAGS_MAP.items():
+        value = getattr(case, key, None)
+        if value:
+            all_marks.append(allure_marker_func(value))
 
     # 使用案例的 title 或提供的 id 作為測試案例的 ID
     case_id = id or getattr(case, 'title', 'N/A')

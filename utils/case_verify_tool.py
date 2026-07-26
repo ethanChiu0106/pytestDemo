@@ -6,6 +6,8 @@ from typing import Any, Dict
 
 import allure
 
+from test_data.common.base import Expectation
+
 logger = logging.getLogger(__name__)
 
 
@@ -124,25 +126,16 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
         _verify_value(sub_schema, key, actual_dict[key])
 
 
-def verify_case_auto(actual_result: Dict[str, Any], expected: Dict[str, Any]):
-    """根據預期資料的結構，自動選擇斷言方法
+def verify_case_auto(actual_result: Dict[str, Any], expected: Expectation):
+    """驗證 API 回應是否符合預期
 
-    - 如果 `expected` 包含 'schema' 鍵，則進行結構驗證。
-    - 如果 `expected` 包含 'result' 鍵，則進行值驗證。
-    - 如果兩者都沒，則將 `expected` 本身當作值來驗證。
+    `schema` 為選填，提供時會先驗證回應的結構與型別；`result` 必填，用於比對欄位值。
 
     Args:
         actual_result: 實際的 API 回應。
-        expected: 包含預期結果和/或結構的字典。
+        expected: 包含預期結果與 (選填的) 預期結構。
     """
-    expected_schema = expected.get('schema')
-    expected_result = expected.get('result')
-    if expected_schema:
+    if expected_schema := expected.get('schema'):
         assert_structure(actual_result, expected_schema)
 
-    if expected_result:
-        assert_result(actual_result, expected_result)
-    else:
-        expected_to_assert = {k: v for k, v in expected.items() if k != 'schema'}
-        if expected_to_assert:
-            assert_result(actual_result, expected_to_assert)
+    assert_result(actual_result, expected['result'])

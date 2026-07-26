@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from faker import Faker
 
 from api.ws_constants import OpCode, PlayerFlow
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import WebSocket
 from test_data.common.helpers import create_param_from_case, create_ws_expectation
@@ -24,8 +24,10 @@ class BindPhoneRequest:
 
 
 @dataclass
-class BindPhoneCase(AllureCase, TestCaseData[BindPhoneRequest]):
+class BindPhoneCase(TestCaseData[BindPhoneRequest]):
     """綁定手機 WS 的測試案例"""
+
+    expected: Expectation
 
     parent_suite: str = 'WebSocket 測試'
     suite: str = '綁定手機'

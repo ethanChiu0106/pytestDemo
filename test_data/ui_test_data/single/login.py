@@ -8,7 +8,7 @@ from typing import List
 import pytest
 from faker import Faker
 
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import UI
 from test_data.common.helpers import create_param_from_case
@@ -27,7 +27,7 @@ class UILoginRequest:
 
 
 @dataclass
-class UILoginCase(AllureCase, TestCaseData[UILoginRequest]):
+class UILoginCase(TestCaseData[UILoginRequest]):
     """登入 UI 的測試案例"""
 
     parent_suite: str = 'UI 測試'

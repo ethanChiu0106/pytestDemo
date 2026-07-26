@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.helpers import create_param_from_case
 from utils.config_loader import get_config
@@ -22,7 +22,7 @@ class UIPurchaseRequest:
 
 
 @dataclass
-class UIPurchaseCase(AllureCase, TestCaseData[UIPurchaseRequest]):
+class UIPurchaseCase(TestCaseData[UIPurchaseRequest]):
     """購買流程 UI 的測試案例"""
 
     parent_suite: str = 'UI 情境測試'
@@ -54,7 +54,6 @@ def generate_ui_purchase_cases() -> List[pytest.param]:
                     product_name='Sauce Labs Bike Light',
                 ),
                 expected={
-                    'success': True,
                     'details': {
                         'product_name': 'Sauce Labs Bike Light',
                         'payment_info': 'SauceCard #31337',

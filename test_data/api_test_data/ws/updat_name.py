@@ -5,7 +5,7 @@
 from dataclasses import dataclass
 
 from api.ws_constants import OpCode, PlayerFlow
-from test_data.common.base import AllureCase, TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import WebSocket
 from test_data.common.helpers import create_param_from_case, create_ws_expectation
@@ -19,8 +19,10 @@ class UpdateNameRequest:
 
 
 @dataclass
-class UpdateNameCase(AllureCase, TestCaseData[UpdateNameRequest]):
+class UpdateNameCase(TestCaseData[UpdateNameRequest]):
     """更新名稱 WS 的測試案例"""
+
+    expected: Expectation
 
     parent_suite: str = 'WebSocket 測試'
     suite: str = '變更名稱'
