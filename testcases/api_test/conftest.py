@@ -73,56 +73,47 @@ def auth_api(api_provider: ApiClientProvider) -> AuthAPI:
 def user_data(request: pytest.FixtureRequest, test_config: dict) -> UserDict:
     """根據測試參數或預設值，提供使用者資料。
 
-    此 fixture 支援透過 `@pytest.mark.parametrize` 間接傳入參數，並有以下處理邏輯：
-    - **當參數是字典 (dict):** 直接回傳該字典作為使用者資料，並驗證其格式。
-    - **當參數是字串 (str):** 將該字串視為 `user_key`，並從設定檔中查找對應的使用者資料。
-    - **當沒有參數時:** 回傳預設的 `default_user` 資料。
+    預設使用 `default_user`，可透過 indirect parametrize 覆寫，支援兩種形態：
+
+        # 指定 secrets.yml 中的 user key
+        @pytest.mark.parametrize('user_data', ['change_password_user'], indirect=True)
+
+        # 直接給定帳密 (值須在 collection 階段即可決定)
+        @pytest.mark.parametrize('user_data', [{'account': 'a', 'password': 'p'}], indirect=True)
 
     Args:
-        request: pytest 的 request 物件，用於獲取 `parametrize` 傳入的參數。
+        request: pytest 的 request 物件，用於取得 indirect parametrize 傳入的參數。
         test_config: 包含所有使用者設定的字典。
 
     Returns:
         一個包含使用者帳號密碼的字典。
 
     Raises:
-        pytest.fail: 如果傳入的 dict 格式錯誤，或找不到指定的使用者 key。
+        pytest.fail: 如果設定檔中找不到指定的 user key。
     """
-    if hasattr(request, 'param'):
-        param = request.param
-        users = test_config['users']
+    param = getattr(request, 'param', 'default_user')
+    if isinstance(param, dict):
+        return param
 
-        if isinstance(param, dict):
-            if 'account' not in param or 'password' not in param:
-                pytest.fail("parametrize dict key必須包含 'account' 和 'password'")
-            return param
-        elif isinstance(param, str):
-            user_key = param
-            user = users.get(user_key)
-            if not user:
-                pytest.fail(f"在 secrets.yml 中找不到透過參數傳入的 user key: '{user_key}'")
-            return user
-
-    default_user = test_config.get('users', {}).get('default_user')
-    if not default_user:
-        pytest.fail("在 secrets.yml 的 'users' 中找不到預設的 'default_user'")
-
-    return default_user
+    user = test_config.get('users', {}).get(param)
+    if not user:
+        pytest.fail(f"在 secrets.yml 的 'users' 中找不到 user key: '{param}'")
+    return user
 
 
 # --- Pre-login & Connection Fixtures ---
 
 
 @pytest.fixture
-def pre_login(user_data: UserDict, auth_api: AuthAPI) -> Generator[AuthAPI, None, None]:
-    """為測試案例預先登入，並在 `AuthAPI` 物件中設定 token。
+def access_token(user_data: UserDict, auth_api: AuthAPI) -> str:
+    """為測試案例預先登入，並回傳取得的 access token。
 
     Args:
         user_data: 使用者的帳號密碼資料。
         auth_api: 用於執行登入的 `AuthAPI` 物件。
 
-    Yields:
-        一個已登入並包含 `Authorization` header 的 `AuthAPI` 物件。
+    Returns:
+        登入成功後取得的 access token (不含 'Bearer ' 前綴)。
 
     Raises:
         ValueError: 如果登入失敗或回傳結果中沒有 token。
@@ -131,13 +122,29 @@ def pre_login(user_data: UserDict, auth_api: AuthAPI) -> Generator[AuthAPI, None
     with allure.step(f'前置步驟 => {account} 登入'):
         result = auth_api.login(account, password)
         if result.get('status_code') != 200:
-            raise ValueError(f'pre_login 失敗 Account:{account} \n{result}')
+            raise ValueError(f'前置登入失敗 Account:{account} \n{result}')
         token = result.get('data', {}).get('access_token')
         if not token:
             raise ValueError(f'登入 response 不含 token: {result}')
-        auth_api.session.headers['Authorization'] = f'Bearer {token}'
-        auth_api.login_result = result
-    yield auth_api
+    return token
+
+
+@pytest.fixture
+def authed_api(api_provider: ApiClientProvider, access_token: str) -> ApiClientProvider:
+    """提供一個「已認證」的 API Client 來源。
+
+    從此 Provider 取得的所有 client 都會自動帶上 Authorization header，
+    因此測試中看到 `authed_api.get(SomeAPI)` 即可知道該 client 已具備授權。
+    匿名的 `api_provider` 不受影響，登入、註冊等不該帶 token 的測試仍應使用它。
+
+    Args:
+        api_provider: 匿名的 API Client 提供者。
+        access_token: 前置登入取得的 access token。
+
+    Returns:
+        一個已帶認證身分的 ApiClientProvider。
+    """
+    return api_provider.with_auth(access_token)
 
 
 @pytest_asyncio.fixture

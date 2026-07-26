@@ -14,6 +14,7 @@ from test_data.api_test_data.scenario.user_profile_scenario import (
     generate_user_profile_scenario_cases,
 )
 from utils.allure_utils import allure_from_case
+from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import verify_case_auto
 
@@ -24,7 +25,10 @@ class TestUserProfileScenario:
     @pytest.mark.parametrize('case', generate_user_profile_scenario_cases())
     @pytest.mark.asyncio
     @allure_from_case
-    async def test_user_profile_scenario(self, case: UserProfileScenarioCase, auth_api: AuthAPI):
+    async def test_user_profile_scenario(self, case: UserProfileScenarioCase, api_provider: ApiClientProvider):
+        # 註冊與登入本身不需授權，使用匿名的 client
+        auth_api = api_provider.get(AuthAPI)
+
         # 步驟 1: 註冊新帳號
         step_1 = '步驟 1: 註冊新帳號'
         with allure.step(step_1):
@@ -39,8 +43,8 @@ class TestUserProfileScenario:
             login_result = auth_api.login(case.request.account, case.request.initial_password)
             verify_case_auto(login_result, case.expected['login'])
             login_data = login_result.get('data')
-            token = login_data.get('access_token')
-            auth_api.session.headers['Authorization'] = f'Bearer {token}'
+            # 後續需授權的步驟改用這個已認證的 client，不影響上面的匿名 auth_api
+            authed_auth_api = api_provider.with_auth(login_data.get('access_token')).get(AuthAPI)
             ws_url = login_data.get('ws_url')
             init_name = login_data.get('player_info').get('username')
         # 初始化 WebSocket 連線
@@ -73,7 +77,9 @@ class TestUserProfileScenario:
         step_5 = '步驟 5: 變更密碼'
         with allure.step(step_5):
             logger.info(step_5)
-            change_password_result = auth_api.change_password(case.request.initial_password, case.request.new_password)
+            change_password_result = authed_auth_api.change_password(
+                case.request.initial_password, case.request.new_password
+            )
             verify_case_auto(change_password_result, case.expected['change_password'])
 
         # 步驟 6: 驗證新密碼有效 (重新登入)
@@ -83,12 +89,14 @@ class TestUserProfileScenario:
             # 使用新的密碼登入
             verify_login_result = auth_api.login(case.request.account, case.request.new_password)
             verify_case_auto(verify_login_result, case.expected['login'])
-            token = verify_login_result.get('data').get('access_token')
-            auth_api.session.headers['Authorization'] = f'Bearer {token}'
+            # 改密碼後舊 token 已失效，以新 token 重新取得已認證的 client
+            authed_auth_api = api_provider.with_auth(verify_login_result.get('data').get('access_token')).get(AuthAPI)
 
         # 步驟 7: 還原密碼
         step_7 = '步驟 7: 還原為初始密碼'
         with allure.step(step_7):
             logger.info(step_7)
-            revert_password_result = auth_api.change_password(case.request.new_password, case.request.initial_password)
+            revert_password_result = authed_auth_api.change_password(
+                case.request.new_password, case.request.initial_password
+            )
             verify_case_auto(revert_password_result, case.expected['revert_password'])

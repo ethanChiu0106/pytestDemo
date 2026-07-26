@@ -5,17 +5,7 @@ from utils.base_request import BaseRequest
 class AuthAPI(BaseRequest):
     """提供使用者認證 (註冊、登入、變更密碼) 相關的 API。"""
 
-    service = Service.FRONT.value
-
-    def __init__(self, base_url: str, session=None):
-        """初始化 AuthAPI
-
-        Args:
-            base_url: API 的 base URL
-            session: 共用的 `requests.Session` 物件，可選
-        """
-        super().__init__(base_url, session=session)
-        self.login_result: dict | None = None
+    service = Service.FRONT
 
     def register(self, account: str, password: str) -> dict:
         """註冊帳號
@@ -48,7 +38,8 @@ class AuthAPI(BaseRequest):
     def change_password(self, old_password: str, new_password: str) -> dict:
         """變更已登入使用者的密碼
 
-        呼叫此 API 前，必須先登入並將 token 設定在 session header 中
+        此 API 需要授權，請透過 `ApiClientProvider.with_auth()` 取得帶認證的 client 再呼叫
+        (測試中可直接使用 `authed_api` fixture)。
         """
         json_data = {'old_password': old_password, 'new_password': new_password}
         result = self.put('/user/password', json=json_data)

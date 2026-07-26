@@ -8,16 +8,7 @@ from .ws_constants import ItemFlow, OpCode
 class ItemAPI(BaseRequest):
     """提供物品相關的 HTTP API"""
 
-    service = Service.FRONT.value
-
-    def __init__(self, base_url: str, session=None):
-        """初始化 ItemAPI
-
-        Args:
-            base_url: API 的 base URL
-            session: 共用的 `requests.Session` 物件，可選
-        """
-        super().__init__(base_url, session=session)
+    service = Service.FRONT
 
     def get_all_items(self) -> dict:
         result = self.get('/items/')
