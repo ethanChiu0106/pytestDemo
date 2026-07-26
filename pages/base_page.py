@@ -4,8 +4,6 @@ import re
 import allure
 from playwright.sync_api import Locator, Page, expect
 
-from utils.config_loader import get_config
-
 logger = logging.getLogger(__name__)
 
 
@@ -19,20 +17,20 @@ class BasePage:
             page: Playwright 的 Page 物件。
         """
         self.page = page
-        self.base_url = get_config().get('urls', {}).get('ui')
 
-    def goto(self, path: str = '', wait_until: str = 'domcontentloaded'):
-        """導覽到指定的路徑，如果路徑為空，則前往 base_url。
+    def goto(self, path: str = '/', wait_until: str = 'domcontentloaded'):
+        """導覽到指定的路徑。
+
+        相對路徑會由 Playwright 的 browser context 以 base_url 自動補完，
+        base_url 由 `base_url` fixture 提供 (見 testcases/ui_test/conftest.py)。
 
         Args:
-            path: 相對路徑。
+            path: 相對於 base_url 的路徑，預設為網站根目錄。
             wait_until: 等待的事件，預設為 "domcontentloaded"。
         """
-        url = f'{self.base_url}{path}'
-        info_text = f'導覽至 URL: {url}'
-        logger.info(info_text)
-        with allure.step(info_text):
-            self.page.goto(url, wait_until=wait_until)
+        with allure.step(f'導覽至: {path}'):
+            self.page.goto(path, wait_until=wait_until)
+            logger.info('導覽至 URL: %s', self.page.url)
 
     def assert_text(self, locator: Locator, expected_text: str, message: str = None):
         """驗證指定 Locator 的文字內容是否符合預期。"""
