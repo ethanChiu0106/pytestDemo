@@ -4,12 +4,14 @@ import allure
 import pytest
 from playwright.sync_api import Playwright
 
+from utils.config_loader import get_config
+
 # 獲取 logger 實例
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='session')
-def base_url(request: pytest.FixtureRequest, test_config: dict) -> str:
+def base_url(request: pytest.FixtureRequest) -> str:
     """提供 UI 測試的 base URL。
 
     此 fixture 覆寫 pytest-base-url 的同名 fixture，pytest-playwright 會將它
@@ -19,21 +21,19 @@ def base_url(request: pytest.FixtureRequest, test_config: dict) -> str:
 
     Args:
         request: pytest 的 request 物件，用於讀取命令列參數。
-        test_config: 當前環境的測試設定。
 
     Returns:
         UI 測試的 base URL。
+
+    Raises:
+        ConfigError: 如果未指定 `--base-url`，且當前環境的設定中沒有 `urls.ui`。
     """
     cli_base_url = request.config.getoption('base_url')
     if cli_base_url:
         logger.info('使用命令列指定的 base URL: %s', cli_base_url)
         return cli_base_url
 
-    ui_url = test_config.get('urls', {}).get('ui')
-    if not ui_url:
-        env = request.config.getoption('--env')
-        pytest.fail(f"環境 '{env}' 的設定檔中缺少 'urls.ui'，UI 測試無法取得 base URL。")
-    return ui_url
+    return get_config().url('ui')
 
 
 @pytest.fixture(scope='package', autouse=True)

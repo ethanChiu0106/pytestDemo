@@ -40,7 +40,7 @@ def generate_bind_phone_cases() -> list:
     產生綁定手機的測試情境。
     """
     phone_number = fake.numerify(text='09########')
-    duplicate_phone = get_config().get('users', {}).get('duplicate_phone_user').get('phone')
+    duplicate_phone = get_config().user('duplicate_phone_user').phone
     op_code = OpCode.S2CPlayerFlow
     sub_code = PlayerFlow.BindPhone
     success_expected = create_ws_expectation(WebSocket.Common.SUCCESS, op_code, sub_code)

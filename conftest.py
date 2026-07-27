@@ -6,7 +6,7 @@ from pathlib import Path
 import allure
 import pytest
 
-from utils.config_loader import get_config, set_current_env
+from utils.config_loader import set_current_env
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +56,6 @@ def pytest_runtest_call(item):
 
 
 # --- 核心 Fixtures ---
-
-
-@pytest.fixture(scope='session')
-def test_config() -> dict:
-    """提供 session 範圍的測試設定檔內容。
-
-    Returns:
-        一個包含所有測試設定的字典。
-    """
-    return get_config()
 
 
 @pytest.fixture(scope='session')

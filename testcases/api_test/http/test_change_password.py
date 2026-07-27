@@ -22,8 +22,7 @@ def password_change_session(authed_api: ApiClientProvider, request):
     if case and 'change_password_success' in request.node.callspec.id:
         # 從 request 中找出是哪個 user key 被用於前置登入
         user_key = request.node.callspec.params.get('user_data', 'default_user')
-        secrets = get_config()
-        original_password = secrets['users'][user_key]['password']
+        original_password = get_config().user(user_key).password
         new_password = case.request.new_password
 
         print(f'[Teardown] 變更密碼 ({new_password}) 回原始密碼 ({original_password})')

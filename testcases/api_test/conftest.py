@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Generator
-from typing import Any, AsyncIterator, Callable, TypedDict
+from typing import Any, AsyncIterator, Callable
 
 import allure
 import pytest
@@ -11,13 +11,9 @@ from api.auth import AuthAPI
 from test_data.common.expectations import HTTP
 from utils.api_provider import ApiClientProvider
 from utils.async_base_ws import AsyncBaseWS
+from utils.config_loader import User, get_config
 
 logger = logging.getLogger(__name__)
-
-
-class UserDict(TypedDict):
-    account: str
-    password: str
 
 
 # --- Core API Fixtures ---
@@ -36,24 +32,21 @@ def shared_session() -> Generator[requests.Session, Any, None]:
 
 
 @pytest.fixture(scope='package')
-def api_provider(shared_session: requests.Session, shared_used_urls: set, test_config: dict) -> ApiClientProvider:
+def api_provider(shared_session: requests.Session, shared_used_urls: set) -> ApiClientProvider:
     """提供一個 package 等級、已設定好的 API Client 提供者。
 
     組裝 `ApiClientProvider` 所需的所有依賴，包含共用的 `requests.Session`、
-    從設定檔讀取的 URLS，以及用於 Allure 報告的 `shared_used_urls` 集合。
+    當前環境的設定，以及用於 Allure 報告的 `shared_used_urls` 集合。
     此 fixture 作為所有 API 測試的統一入口，確保所有 API Client 都透過一致的方式建立和管理。
 
     Args:
         shared_session: 整個測試 package 中共用的 `requests.Session` 物件。
-        shared_used_urls: 用於記錄所有被呼叫過的 URL 的集合，以產生 Allure 報告。
-        test_config: 已根據環境 (--env) 讀取並解析的設定檔內容。
+        shared_used_urls: 用於記錄所有被呼叫過的 URL 的集合，以產生 Allure 報告 (來自根 conftest.py)。
 
     Returns:
         一個已完全設定好、可供使用的 ApiClientProvider 物件。
     """
-    # Note: shared_used_urls and test_config are from the root conftest.py
-    env_urls = test_config.get('urls', {})
-    return ApiClientProvider(shared_session, env_urls, shared_used_urls)
+    return ApiClientProvider(shared_session, get_config(), shared_used_urls)
 
 
 @pytest.fixture(scope='package')
@@ -70,7 +63,7 @@ def auth_api(api_provider: ApiClientProvider) -> AuthAPI:
 
 
 @pytest.fixture
-def user_data(request: pytest.FixtureRequest, test_config: dict) -> UserDict:
+def user_data(request: pytest.FixtureRequest) -> User:
     """根據測試參數或預設值，提供使用者資料。
 
     預設使用 `default_user`，可透過 indirect parametrize 覆寫，支援兩種形態：
@@ -83,29 +76,24 @@ def user_data(request: pytest.FixtureRequest, test_config: dict) -> UserDict:
 
     Args:
         request: pytest 的 request 物件，用於取得 indirect parametrize 傳入的參數。
-        test_config: 包含所有使用者設定的字典。
 
     Returns:
-        一個包含使用者帳號密碼的字典。
+        一個 `User` 物件。
 
     Raises:
-        pytest.fail: 如果設定檔中找不到指定的 user key。
+        ConfigError: 如果設定檔中找不到指定的 user key。
     """
     param = getattr(request, 'param', 'default_user')
     if isinstance(param, dict):
-        return param
-
-    user = test_config.get('users', {}).get(param)
-    if not user:
-        pytest.fail(f"在 secrets.yml 的 'users' 中找不到 user key: '{param}'")
-    return user
+        return User(**param)
+    return get_config().user(param)
 
 
 # --- Pre-login & Connection Fixtures ---
 
 
 @pytest.fixture
-def access_token(user_data: UserDict, auth_api: AuthAPI) -> str:
+def access_token(user_data: User, auth_api: AuthAPI) -> str:
     """為測試案例預先登入，並回傳取得的 access token。
 
     Args:
@@ -118,7 +106,7 @@ def access_token(user_data: UserDict, auth_api: AuthAPI) -> str:
     Raises:
         ValueError: 如果登入失敗或回傳結果中沒有 token。
     """
-    account, password = user_data['account'], user_data['password']
+    account, password = user_data.account, user_data.password
     with allure.step(f'前置步驟 => {account} 登入'):
         result = auth_api.login(account, password)
         if result.get('status_code') != 200:
@@ -148,7 +136,7 @@ def authed_api(api_provider: ApiClientProvider, access_token: str) -> ApiClientP
 
 
 @pytest_asyncio.fixture
-async def ws_connect(auth_api: AuthAPI, user_data: UserDict) -> AsyncIterator[AsyncBaseWS]:
+async def ws_connect(auth_api: AuthAPI, user_data: User) -> AsyncIterator[AsyncBaseWS]:
     """提供一個已連線的 WebSocket 物件。
 
     Args:
@@ -161,7 +149,7 @@ async def ws_connect(auth_api: AuthAPI, user_data: UserDict) -> AsyncIterator[As
     Raises:
         ValueError: 如果登入後找不到 WebSocket URL。
     """
-    result = auth_api.login(user_data['account'], user_data['password'])
+    result = auth_api.login(user_data.account, user_data.password)
     ws_url = result.get('data', {}).get('ws_url')
     if not ws_url:
         raise ValueError(f"登入成功，但在Response中找不到 'ws_url': {result}")
@@ -177,23 +165,23 @@ async def ws_connect(auth_api: AuthAPI, user_data: UserDict) -> AsyncIterator[As
 
 
 @pytest.fixture(scope='package')
-def user_creator(auth_api: AuthAPI, test_config: dict) -> Callable[[str], None]:
+def user_creator(auth_api: AuthAPI) -> Callable[[str], None]:
     """提供一個用於建立測試使用者的工廠函式。
 
-    將建立使用者所需的 `auth_api` 和 `test_config` 依賴包裝起來，
+    將建立使用者所需的 `auth_api` 依賴包裝起來，
     回傳一個更簡單的函式，方便在各個 setup fixture 中重複使用。
 
-    依賴的 `auth_api` 和 `test_config` fixture 來自於根 conftest.py。
+    找不到 user key 時只記錄警告並跳過，不讓建帳號這個前置動作使測試失敗
+    (該使用者若真的被測試用到，屆時會由 `Config.user()` 明確報錯)。
     """
 
     def _creator(user_key: str):
-        user_config = test_config.get('users', {}).get(user_key)
-        if not user_config:
+        user = get_config().users.get(user_key)
+        if not user:
             logger.warning(f"\nWarning: 在 secrets.yml 中找不到 user key '{user_key}'，跳過建立。\n")
             return
 
-        account = user_config['account']
-        password = user_config['password']
+        account, password = user.account, user.password
         logger.info(f"\n建立帳號 '{account}' (來自: {user_key})...")
 
         result = auth_api.register(account, password)

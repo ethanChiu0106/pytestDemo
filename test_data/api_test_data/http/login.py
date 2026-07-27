@@ -40,8 +40,7 @@ def generate_login_cases() -> list:
     """
     產生登入 API 的測試情境。
     """
-    secrets = get_config()
-    default_user = secrets['users']['default_user']
+    default_user = get_config().user('default_user')
 
     cases = [
         create_param_from_case(
@@ -52,8 +51,8 @@ def generate_login_cases() -> list:
                 title='登入成功',
                 description='輸入正確的帳號密碼測試是否可以登入',
                 request=LoginRequest(
-                    account=default_user['account'],
-                    password=default_user['password'],
+                    account=default_user.account,
+                    password=default_user.password,
                 ),
                 expected={
                     'result': HTTP.Common.SUCCESS,
@@ -86,7 +85,7 @@ def generate_login_cases() -> list:
                 sub_suite='登入 - 失敗',
                 title='密碼有誤',
                 description='輸入正確帳號，但隨機產生錯誤密碼',
-                request=LoginRequest(account=default_user['account'], password=fake.password()),
+                request=LoginRequest(account=default_user.account, password=fake.password()),
                 expected={
                     'result': HTTP.Auth.Login.PASSWORD_ERROR,
                     'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,

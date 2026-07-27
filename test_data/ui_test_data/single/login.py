@@ -41,8 +41,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
     產生登入 UI 的測試情境。
     包含正向與反向案例。
     """
-    secrets = get_config()
-    default_user = secrets['users']['ui_default_user']
+    default_user = get_config().user('ui_default_user')
 
     cases = [
         create_param_from_case(
@@ -53,8 +52,8 @@ def generate_ui_login_cases() -> List[pytest.param]:
                 title='UI 登入成功',
                 description='輸入正確的帳號密碼，驗證是否可以成功登入',
                 request=UILoginRequest(
-                    username=default_user['account'],
-                    password=default_user['password'],
+                    username=default_user.account,
+                    password=default_user.password,
                 ),
                 expected=UI.Login.SUCCESS,
                 marks=[PytestMark.POSITIVE, PytestMark.UI_SINGLE],
@@ -69,7 +68,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
                 title='密碼錯誤',
                 description='輸入正確的帳號及錯誤的密碼，驗證是否顯示錯誤訊息',
                 request=UILoginRequest(
-                    username=default_user['account'],
+                    username=default_user.account,
                     password=fake.password(),
                 ),
                 expected=UI.Login.LOGIN_FAIL,
@@ -101,7 +100,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
                 title='密碼留空',
                 description='帳號已輸入，密碼留空，驗證是否顯示錯誤訊息',
                 request=UILoginRequest(
-                    username=default_user['account'],
+                    username=default_user.account,
                     password='',
                 ),
                 expected=UI.Login.EMPTY_PASSWORD,
@@ -118,7 +117,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
                 description='帳號留空，密碼已輸入，驗證是否顯示錯誤訊息',
                 request=UILoginRequest(
                     username='',
-                    password=default_user['password'],
+                    password=default_user.password,
                 ),
                 expected=UI.Login.EMPTY_USERNAME,
                 marks=[PytestMark.NEGATIVE, PytestMark.UI_SINGLE],

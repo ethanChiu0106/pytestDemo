@@ -41,10 +41,9 @@ def generate_change_password_cases() -> list:
     """
     產生變更密碼 API 的測試情境。
     """
-    secrets = get_config()
     # 指定此測試案例使用 change_password_user 的資料
-    target_user = secrets['users']['change_password_user']
-    old = target_user['password']
+    target_user = get_config().user('change_password_user')
+    old = target_user.password
     new = fake.password(length=10, special_chars=False)
     password_6_chars = fake.password(length=6, special_chars=False)
     password_21_chars = fake.password(length=21, special_chars=False)

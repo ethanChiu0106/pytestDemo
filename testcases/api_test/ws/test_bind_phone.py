@@ -9,23 +9,17 @@ from api.player import PlayerWS
 from test_data.api_test_data.ws.bind_phone import BindPhoneCase, generate_bind_phone_cases
 from utils.async_base_ws import AsyncBaseWS
 from utils.case_verify_tool import verify_case_auto
+from utils.config_loader import get_config
 
 
 @pytest_asyncio.fixture(scope='module', autouse=True)
-async def pre_bound_phone_user(
-    setup_duplicate_phone_user: None, auth_api: AuthAPI, test_config: dict
-) -> AsyncIterator[str]:
+async def pre_bound_phone_user(setup_duplicate_phone_user: None, auth_api: AuthAPI) -> AsyncIterator[str]:
     """
     確保一個使用者已綁定一個固定的手機號碼。
     :return: 已綁定的固定手機號碼字串。
     """
-    user_config = test_config.get('users', {}).get('duplicate_phone_user')
-    if not user_config:
-        pytest.fail("在 secrets.yml 中找不到 'duplicate_phone_user'，無法設定重複綁定的測試環境。")
-
-    account = user_config['account']
-    password = user_config['password']
-    pre_bound_phone = user_config['phone']
+    user = get_config().user('duplicate_phone_user')
+    account, password, pre_bound_phone = user.account, user.password, user.phone
 
     with allure.step(f'前置步驟 => 使用 {account} 登入並綁定手機 {pre_bound_phone}'):
         login_result = auth_api.login(account, password)

@@ -35,8 +35,7 @@ def generate_ui_purchase_cases() -> List[pytest.param]:
     """
     產生購買流程 UI 的測試情境。
     """
-    secrets = get_config()
-    default_user = secrets['users']['ui_default_user']
+    default_user = get_config().user('ui_default_user')
     cases = [
         create_param_from_case(
             UIPurchaseCase(
@@ -46,8 +45,8 @@ def generate_ui_purchase_cases() -> List[pytest.param]:
                 title='UI 成功購買商品',
                 description='模擬使用者從登入、瀏覽、加入購物車到完成結帳的完整流程。',
                 request=UIPurchaseRequest(
-                    username=default_user['account'],
-                    password=default_user['password'],
+                    username=default_user.account,
+                    password=default_user.password,
                     first_name='Test',
                     last_name='User',
                     postal_code='12345',

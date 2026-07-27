@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Type, TypeVar
 
 import requests
 
+from utils.config_loader import Config
+
 if TYPE_CHECKING:
     from api.service_names import Service
 
@@ -17,7 +19,7 @@ class ApiClientProvider:
     def __init__(
         self,
         session: requests.Session,
-        env_config: dict,
+        config: Config,
         used_urls_set: set,
         default_headers: dict = None,
     ):
@@ -25,13 +27,13 @@ class ApiClientProvider:
 
         Args:
             session: 共用的 requests.Session 物件。
-            env_config: 包含所有伺服器網址的字典 (來自設定檔的 'urls' 區塊)。
+            config: 當前環境的測試設定，用於查詢各服務的 base URL。
             used_urls_set: 共用的集合，用於記錄所有呼叫過的伺服器網址。
             default_headers: 由此 Provider 建立的 client 都會帶上的 headers。
                 用於表達 Provider 的身分 (例如已認證)，見 `with_auth`。
         """
         self._session = session
-        self._env_config = env_config
+        self._config = config
         self._used_urls = used_urls_set
         self._default_headers = default_headers or {}
 
@@ -50,7 +52,7 @@ class ApiClientProvider:
         """
         return ApiClientProvider(
             self._session,
-            self._env_config,
+            self._config,
             self._used_urls,
             default_headers={**self._default_headers, 'Authorization': f'Bearer {token}'},
         )
@@ -74,7 +76,7 @@ class ApiClientProvider:
 
         Raises:
             AttributeError: 如果 api_class 未宣告 `service` 屬性且未傳入 `service` 參數。
-            KeyError: 如果設定檔的 'urls' 中找不到該服務。
+            ConfigError: 如果設定檔的 'urls' 中找不到該服務。
         """
         target_service = service or getattr(api_class, 'service', None)
         if target_service is None:
@@ -82,11 +84,7 @@ class ApiClientProvider:
                 f"{api_class.__name__} 未宣告 'service' 屬性，也未傳入 service 參數，無法決定要連線的服務"
             )
 
-        service_name = target_service.value
-        if service_name not in self._env_config:
-            raise KeyError(f"在 secrets.yml 的 'urls' 配置中，找不到服務 '{service_name}' 的 URL")
-
-        base_url = self._env_config[service_name]
+        base_url = self._config.url(target_service.value)
         self._used_urls.add(base_url)
 
         return self._create_client(api_class, base_url)
