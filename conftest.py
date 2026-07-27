@@ -9,6 +9,11 @@ import pytest
 from test_data.common.base import TestCaseData
 from utils.config_loader import set_current_env
 
+# pytest 只改寫測試檔與 conftest 內的斷言。不註冊的話，`case_verify_tool` 裡的
+# 比對失敗只會拋出光禿禿的 `AssertionError`，看不到實際值與預期值的差異。
+# 必須在該模組被 import 前呼叫，因此放在 conftest 的最上層。
+pytest.register_assert_rewrite('utils.case_verify_tool')
+
 logger = logging.getLogger(__name__)
 
 

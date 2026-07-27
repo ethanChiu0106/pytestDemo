@@ -1,7 +1,6 @@
 """提供通用於測試案例的自訂斷言工具"""
 
 import logging
-from functools import singledispatch
 from typing import Any, Dict
 
 import allure
@@ -50,6 +49,36 @@ def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]
     assert filtered_actual == filtered_expected
 
 
+def _verify_value(schema: Any, path: str, value: Any):
+    """依 schema 的形態驗證單一值
+
+    Args:
+        schema: 預期結構的片段，支援 None (略過)、型別、型別元組、dict (巢狀)、list。
+        path: 此值在回應中的位置，僅用於錯誤訊息。
+        value: 實際的值。
+
+    Raises:
+        AssertionError: 如果結構或型別不匹配
+        TypeError: 如果 `schema` 本身的格式不合法
+    """
+    if schema is None:
+        return
+    if isinstance(schema, tuple):
+        assert isinstance(value, schema), f"路徑 '{path}' 的值型別 {type(value)} 不在預期的型別元組 {schema} 中"
+    elif isinstance(schema, dict):
+        assert isinstance(value, dict), f"路徑 '{path}' 的值應為字典，但實際是 {type(value)}"
+        assert_structure(value, schema)
+    elif isinstance(schema, list):
+        assert isinstance(value, list), f"路徑 '{path}' 的值應為列表，但實際是 {type(value)}"
+        if schema:  # schema 為 `[]` 時僅驗證是列表
+            for index, item in enumerate(value):
+                _verify_value(schema[0], f'{path}[{index}]', item)
+    elif isinstance(schema, type):
+        assert isinstance(value, schema), f"路徑 '{path}' 的值應為 {schema} 型別，但實際是 {type(value)}"
+    else:
+        raise TypeError(f"預期結構 (schema) 中 '{path}' 的值 '{schema}' 不是合法的型別、字典、列表、元組或 None")
+
+
 @allure.step('驗證回應的巢狀結構 (Nested Structure)')
 def assert_structure(actual_dict: dict, expected_schema: dict):
     """遞迴驗證一個字典是否符合預期的巢狀結構
@@ -68,54 +97,6 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
         AssertionError: 如果結構或型別不匹配
         TypeError: 如果 `expected_schema` 本身的格式不合法
     """
-
-    def _verify_list(path: str, data_list: list, schema_list: list):
-        """輔助函式：專門驗證列表"""
-        assert isinstance(data_list, list), f"路徑 '{path}' 的值應為列表，但實際是 {type(data_list)}"
-        if not schema_list:
-            return  # 如果 schema 是 `[]`，僅驗證是列表即可
-
-        item_schema = schema_list[0]
-        for i, item in enumerate(data_list):
-            _verify_value(item_schema, f'{path}[{i}]', item)
-
-    @singledispatch
-    def _verify_value_dispatcher(schema: Any, path: str, verify_data: Any):
-        """預設的處理器，處理所有未被明確註冊的型別"""
-        raise TypeError(f"預期結構 (schema) 中 '{path}' 的值 '{schema}' 不是合法的型別、字典、列表、元組或 None")
-
-    @_verify_value_dispatcher.register(type(None))
-    def _handle_none(schema, path, verify_data):
-        """處理 schema 為 None 的情況"""
-        return
-
-    @_verify_value_dispatcher.register(tuple)
-    def _handle_tuple(schema, path, verify_data):
-        """處理 schema 為 tuple (多重型別) 的情況"""
-        assert isinstance(verify_data, schema), (
-            f"路徑 '{path}' 的值型別 {type(verify_data)} 不在預期的型別元組 {schema} 中"
-        )
-
-    @_verify_value_dispatcher.register(dict)
-    def _handle_dict(schema, path, verify_data):
-        """處理 schema 為 dict (巢狀物件) 的情況"""
-        assert isinstance(verify_data, dict), f"路徑 '{path}' 的值應為字典，但實際是 {type(verify_data)}"
-        assert_structure(verify_data, schema)
-
-    @_verify_value_dispatcher.register(list)
-    def _handle_list(schema, path, verify_data):
-        """處理 schema 為 list (列表) 的情況"""
-        _verify_list(path, verify_data, schema)
-
-    @_verify_value_dispatcher.register(type)
-    def _handle_type(schema, path, verify_data):
-        """處理 schema 為 type (單一型別) 的情況"""
-        assert isinstance(verify_data, schema), f"路徑 '{path}' 的值應為 {schema} 型別，但實際是 {type(verify_data)}"
-
-    def _verify_value(schema: Any, path: str, verify_data: Any):
-        """根據 schema 型別分派驗證邏輯"""
-        _verify_value_dispatcher(schema, path, verify_data)
-
     assert isinstance(actual_dict, dict), f'要驗證的對象不是字典，而是 {type(actual_dict)}'
 
     expected_keys = set(expected_schema.keys())
