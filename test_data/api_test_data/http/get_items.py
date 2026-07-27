@@ -5,9 +5,9 @@
 from dataclasses import dataclass
 
 from test_data.common.base import Expectation, TestCaseData
-from test_data.common.enums import AllureSeverity, PytestMark
+from test_data.common.case_builder import CaseBuilder
+from test_data.common.enums import PytestMark
 from test_data.common.expectations import HTTP
-from test_data.common.helpers import create_param_from_case
 
 
 @dataclass
@@ -29,26 +29,20 @@ class GetItemsCase(TestCaseData[GetItemsRequest]):
     feature: str = '獲取多個物品'
 
 
+get_items = CaseBuilder(GetItemsCase, sub_suite='獲取多個物品', marks=[PytestMark.SINGLE, PytestMark.HTTP])
+
+
 def generate_get_items_cases() -> list:
     """
     產生獲取多個物品 API 的測試情境。
     """
-    cases = [
-        create_param_from_case(
-            GetItemsCase(
-                severity=AllureSeverity.NORMAL,
-                story='正向情境 - 成功獲取所有物品',
-                sub_suite='獲取多個物品 - 成功',
-                title='成功獲取所有物品列表',
-                description='測試是否能成功獲取所有物品的列表',
-                request=GetItemsRequest(),
-                expected={
-                    'result': HTTP.Common.SUCCESS,
-                    'schema': HTTP.Item.Schemas.GET_ITEM_LIST,
-                },
-                marks=[PytestMark.POSITIVE, PytestMark.HTTP, PytestMark.SINGLE],
-            ),
+    return [
+        get_items.positive(
             id='get_items_success',
+            title='成功獲取所有物品列表',
+            description='測試是否能成功獲取所有物品的列表',
+            story='正向情境 - 成功獲取所有物品',
+            request=GetItemsRequest(),
+            expected={'result': HTTP.Common.SUCCESS, 'schema': HTTP.Item.Schemas.GET_ITEM_LIST},
         ),
     ]
-    return cases

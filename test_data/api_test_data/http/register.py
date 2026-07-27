@@ -7,9 +7,10 @@ from dataclasses import dataclass
 from faker import Faker
 
 from test_data.common.base import Expectation, TestCaseData
+from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
-from test_data.common.helpers import create_param_from_case, generate_accounts
+from test_data.common.helpers import generate_accounts
 
 fake = Faker('zh_TW')
 
@@ -34,6 +35,20 @@ class RegisterCase(TestCaseData[RegisterRequest]):
     feature: str = '註冊功能'
 
 
+register = CaseBuilder(RegisterCase, sub_suite='註冊', marks=[PytestMark.SINGLE, PytestMark.HTTP])
+
+SUCCESS_EXPECTED = {'result': HTTP.Auth.Register.SUCCESS, 'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS}
+REPEATED_ACCOUNT_EXPECTED = {'result': HTTP.Auth.Register.REPEATED_ACCOUNT, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE}
+ACCOUNT_FORMAT_EXPECTED = {
+    'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
+    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
+}
+PASSWORD_FORMAT_EXPECTED = {
+    'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
+    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
+}
+
+
 def generate_register_cases() -> list:
     """
     產生註冊 API 的所有測試情境。
@@ -52,175 +67,92 @@ def generate_register_cases() -> list:
     password_all_eng = fake.password(length=10, special_chars=False, digits=False)
     password_all_num = fake.password(length=10, special_chars=False, upper_case=False, lower_case=False)
 
-    # --- 測試案例資料定義 ---
-    test_data_definitions = [
-        # 正向情境
-        {
-            'id': 'register_success_dynamic_account',
-            'story': '正向情境 - 使用者成功註冊',
-            'sub_suite': '註冊 - 成功',
-            'title': '註冊成功 - 動態新帳號',
-            'description': '帳號5~20英數, 密碼7~20英數',
-            'account': valid_account,
-            'password': valid_password,
-            'expected': {
-                'result': HTTP.Auth.Register.SUCCESS,
-                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
-            },
-            'severity': AllureSeverity.CRITICAL,
-            'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'register_success_5_chars_account_and_7_chars_password',
-            'story': '正向情境 - 使用者成功註冊',
-            'sub_suite': '註冊 - 成功',
-            'title': '註冊成功 - 帳號5碼, 密碼7碼(邊界值)',
-            'description': '帳號5碼',
-            'account': account_5_chars,
-            'password': password_7_chars,
-            'expected': {
-                'result': HTTP.Auth.Register.SUCCESS,
-                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
-            },
-            'severity': AllureSeverity.CRITICAL,
-            'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'register_success_20_chars_account_and_20_chars_password',
-            'story': '正向情境 - 使用者成功註冊',
-            'sub_suite': '註冊 - 成功',
-            'title': '註冊成功 - 帳號20碼, 密碼20碼(邊界值)',
-            'description': '帳號20碼',
-            'account': account_20_chars,
-            'password': account_20_chars,
-            'expected': {
-                'result': HTTP.Auth.Register.SUCCESS,
-                'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS,
-            },
-            'severity': AllureSeverity.CRITICAL,
-            'marks': [PytestMark.SINGLE, PytestMark.POSITIVE, PytestMark.HTTP],
-        },
-        # 反向情境
-        {
-            'id': 'register_with_existing_account',
-            'story': '反向情境 - 帳號已存在',
-            'sub_suite': '註冊 - 失敗',
-            'title': '已存在帳號',
-            'description': '反向測試：使用已知的重複帳號',
-            'account': valid_account,
-            'password': valid_password,
-            'expected': {
-                'result': HTTP.Auth.Register.REPEATED_ACCOUNT,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.CRITICAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'account_too_long',
-            'story': '反向情境 - 帳號格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 帳號過長',
-            'description': '反向測試：帳號長度超過20碼',
-            'account': 'a' * 21,
-            'password': 'aa123456',
-            'expected': {
-                'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'account_too_short',
-            'story': '反向情境 - 帳號格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 帳號過短',
-            'description': '反向測試：帳號長度不足5碼',
-            'account': 'a' * 4,
-            'password': 'aa123456',
-            'expected': {
-                'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'password_too_short',
-            'story': '反向情境 - 密碼格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 密碼過短',
-            'description': '反向測試：密碼長度6碼',
-            'account': negative_test_account,
-            'password': password_6_chars,
-            'expected': {
-                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'password_too_long',
-            'story': '反向情境 - 密碼格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 密碼過長',
-            'description': '反向測試：密碼長度21碼',
-            'account': negative_test_account,
-            'password': password_21_chars,
-            'expected': {
-                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'password_all_english',
-            'story': '反向情境 - 密碼格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 密碼全英',
-            'description': '反向測試：密碼全英',
-            'account': negative_test_account,
-            'password': password_all_eng,
-            'expected': {
-                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
-        {
-            'id': 'password_all_numeric',
-            'story': '反向情境 - 密碼格式錯誤',
-            'sub_suite': '註冊 - 失敗',
-            'title': '格式錯誤 - 密碼全數',
-            'description': '反向測試：密碼全數',
-            'account': negative_test_account,
-            'password': password_all_num,
-            'expected': {
-                'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-                'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
-            },
-            'severity': AllureSeverity.NORMAL,
-            'marks': [PytestMark.SINGLE, PytestMark.NEGATIVE, PytestMark.HTTP],
-        },
+    account_format_story = '反向情境 - 帳號格式錯誤'
+    password_format_story = '反向情境 - 密碼格式錯誤'
+
+    return [
+        register.positive(
+            id='register_success_dynamic_account',
+            title='註冊成功 - 動態新帳號',
+            description='帳號5~20英數, 密碼7~20英數',
+            story='正向情境 - 使用者成功註冊',
+            severity=AllureSeverity.CRITICAL,
+            request=RegisterRequest(account=valid_account, password=valid_password),
+            expected=SUCCESS_EXPECTED,
+        ),
+        register.positive(
+            id='register_success_5_chars_account_and_7_chars_password',
+            title='註冊成功 - 帳號5碼, 密碼7碼(邊界值)',
+            description='帳號5碼',
+            story='正向情境 - 使用者成功註冊',
+            severity=AllureSeverity.CRITICAL,
+            request=RegisterRequest(account=account_5_chars, password=password_7_chars),
+            expected=SUCCESS_EXPECTED,
+        ),
+        register.positive(
+            id='register_success_20_chars_account_and_20_chars_password',
+            title='註冊成功 - 帳號20碼, 密碼20碼(邊界值)',
+            description='帳號20碼',
+            story='正向情境 - 使用者成功註冊',
+            severity=AllureSeverity.CRITICAL,
+            request=RegisterRequest(account=account_20_chars, password=account_20_chars),
+            expected=SUCCESS_EXPECTED,
+        ),
+        register.negative(
+            id='register_with_existing_account',
+            title='已存在帳號',
+            description='反向測試：使用已知的重複帳號',
+            story='反向情境 - 帳號已存在',
+            severity=AllureSeverity.CRITICAL,
+            request=RegisterRequest(account=valid_account, password=valid_password),
+            expected=REPEATED_ACCOUNT_EXPECTED,
+        ),
+        register.negative(
+            id='account_too_long',
+            title='格式錯誤 - 帳號過長',
+            description='反向測試：帳號長度超過20碼',
+            story=account_format_story,
+            request=RegisterRequest(account='a' * 21, password='aa123456'),
+            expected=ACCOUNT_FORMAT_EXPECTED,
+        ),
+        register.negative(
+            id='account_too_short',
+            title='格式錯誤 - 帳號過短',
+            description='反向測試：帳號長度不足5碼',
+            story=account_format_story,
+            request=RegisterRequest(account='a' * 4, password='aa123456'),
+            expected=ACCOUNT_FORMAT_EXPECTED,
+        ),
+        register.negative(
+            id='password_too_short',
+            title='格式錯誤 - 密碼過短',
+            description='反向測試：密碼長度6碼',
+            story=password_format_story,
+            request=RegisterRequest(account=negative_test_account, password=password_6_chars),
+            expected=PASSWORD_FORMAT_EXPECTED,
+        ),
+        register.negative(
+            id='password_too_long',
+            title='格式錯誤 - 密碼過長',
+            description='反向測試：密碼長度21碼',
+            story=password_format_story,
+            request=RegisterRequest(account=negative_test_account, password=password_21_chars),
+            expected=PASSWORD_FORMAT_EXPECTED,
+        ),
+        register.negative(
+            id='password_all_english',
+            title='格式錯誤 - 密碼全英',
+            description='反向測試：密碼全英',
+            story=password_format_story,
+            request=RegisterRequest(account=negative_test_account, password=password_all_eng),
+            expected=PASSWORD_FORMAT_EXPECTED,
+        ),
+        register.negative(
+            id='password_all_numeric',
+            title='格式錯誤 - 密碼全數',
+            description='反向測試：密碼全數',
+            story=password_format_story,
+            request=RegisterRequest(account=negative_test_account, password=password_all_num),
+            expected=PASSWORD_FORMAT_EXPECTED,
+        ),
     ]
-
-    # --- 迴圈生成測試案例 ---
-    cases = []
-    for data in test_data_definitions:
-        case = RegisterCase(
-            severity=data['severity'],
-            story=data['story'],
-            sub_suite=data['sub_suite'],
-            title=data['title'],
-            description=data['description'],
-            request=RegisterRequest(account=data['account'], password=data['password']),
-            expected=data['expected'],
-            marks=data['marks'],
-        )
-        cases.append(create_param_from_case(case, id=data['id']))
-
-    return cases
