@@ -27,20 +27,21 @@ class TestCaseData(Generic[RequestType]):
 
     分類標籤之所以放在案例上而非測試函式上，是因為這些測試都是 data-driven 的——
     同一個測試函式會跑出多個案例，每個案例在報告中需要各自的標題與階層。
+
+    只手動填 Allure 的 Behaviors 階層 (epic / feature / story)。Suites 階層
+    (parentSuite / suite) 由 allure-pytest 依測試所在的模組自動推導，不需要也
+    不應該再手填一次——兩套階層填的是同一批測試，重複維護只會不同步。
     """
 
     # --- 沒有預設值的欄位必須在前面 ---
     title: str
-    description: str
-    sub_suite: str
     story: str
     request: Optional[RequestType]
     expected: dict
     marks: List[PytestMark]
-    parent_suite: str
-    suite: str
     epic: str
     feature: str
 
     # --- 有預設值的欄位必須在後面 ---
     severity: AllureSeverity = AllureSeverity.NORMAL
+    description: str = ''

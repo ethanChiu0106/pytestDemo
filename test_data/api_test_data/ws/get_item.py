@@ -5,7 +5,7 @@
 from dataclasses import dataclass, field
 
 from api.ws_constants import ItemFlow, OpCode
-from test_data.common.base import Expectation, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import PytestMark
 from test_data.common.expectations import WebSocket
@@ -20,16 +20,7 @@ class GetItemWsRequest:
     item_id: int | None = field(default=None)
 
 
-@dataclass
-class GetItemWsCase(TestCaseData[GetItemWsRequest]):
-    """獲取物品 WebSocket API 的測試案例"""
-
-    expected: Expectation
-
-    parent_suite: str = 'WebSocket 測試'
-    suite: str = '物品'
-    epic: str = '物品相關功能'
-    feature: str = '獲取物品 (WS)'
+GetItemWsCase = TestCaseData[GetItemWsRequest]
 
 
 op_code = OpCode.S2CItemFlow
@@ -39,7 +30,13 @@ fail_item_not_found = create_ws_expectation(WebSocket.Item.ITEM_NOT_FOUND, op_co
 fail_id_not_provide = create_ws_expectation(WebSocket.Item.ITEM_ID_NOT_PROVIDED, op_code, sub_code)
 
 
-get_item_ws = CaseBuilder(GetItemWsCase, sub_suite='獲取物品 (WS)', marks=[PytestMark.SINGLE, PytestMark.WS])
+get_item_ws = CaseBuilder(
+    GetItemWsCase,
+    epic='物品相關功能',
+    feature='獲取物品 (WS)',
+    story_base='獲取物品',
+    marks=[PytestMark.SINGLE, PytestMark.WS],
+)
 
 
 def generate_get_item_ws_cases() -> list:
@@ -50,25 +47,25 @@ def generate_get_item_ws_cases() -> list:
         get_item_ws.positive(
             id='get_item_ws_success',
             title='獲取存在的物品',
-            description='使用 item_id=1 測試是否能成功獲取物品',
-            story='正向情境 - 成功獲取物品',
             request=GetItemWsRequest(item_id=1),
             expected={'result': success_expected, 'schema': WebSocket.Schemas.SINGLE_ITEM},
+            story='正向情境 - 成功獲取物品',
+            description='使用 item_id=1 測試是否能成功獲取物品',
         ),
         get_item_ws.negative(
             id='get_item_ws_not_found',
             title='獲取不存在的物品',
-            description='使用一個極大的 item_id 測試物品不存在的情境',
-            story='反向情境 - 物品不存在',
             request=GetItemWsRequest(item_id=999999),
             expected={'result': fail_item_not_found, 'schema': WebSocket.Schemas.FAIL},
+            story='反向情境 - 物品不存在',
+            description='使用一個極大的 item_id 測試物品不存在的情境',
         ),
         get_item_ws.negative(
             id='get_item_ws_id_not_provided',
             title='請求中不帶 item_id',
-            description='測試請求的 data 中不包含 item_id 欄位',
-            story='邊界值情境 - 不提供 item_id',
             request=GetItemWsRequest(item_id=None),
             expected={'result': fail_id_not_provide, 'schema': WebSocket.Schemas.FAIL},
+            story='邊界值情境 - 不提供 item_id',
+            description='測試請求的 data 中不包含 item_id 欄位',
         ),
     ]

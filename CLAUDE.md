@@ -87,6 +87,30 @@ class OrderAPI(BaseRequest):
 
 ## 測試資料的約定
 
+**案例一律用 `CaseBuilder` 建立**（`test_data/common/case_builder.py`）。每檔開頭建一個 builder 固定住分類欄位，之後每個案例只需 `id` / `title` / `request` / `expected` 四項：
+
+```python
+get_item = CaseBuilder(
+    GetItemCase,
+    epic='物品相關功能',
+    feature='獲取物品',
+    story_base='獲取物品',
+    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+)
+
+get_item.negative(id='get_item_not_found', title='獲取不存在的物品', request=..., expected=...)
+```
+
+`positive()` / `negative()` 會自動掛上對應的 mark 並推導 `story`（`'{正/反}向情境 - {story_base}'`）。需要更細的分組時（例如「邊界值情境」，或同一檔的反向要拆成帳號錯誤／密碼錯誤）再顯式傳 `story`。`description` 與 `severity` 皆選填。
+
+每檔的 `XxxCase` 是**型別別名**（`XxxCase = TestCaseData[XxxRequest]`），不是新類別——分類欄位都在 builder 上，別名只負責綁定請求型別讓測試簽名好讀。不需要請求參數的 API（如取得列表）連 `XxxRequest` 都不用建，別名寫成 `XxxCase = TestCaseData`、案例傳 `request=None` 即可。
+
+**只手填 Allure 的 Behaviors 階層（`epic` / `feature` / `story`）。** Suites（`parentSuite` / `suite` / `subSuite`）由 allure-pytest 依模組與類別名自動推導，已驗證三層都會填滿，**不要再加回 `parent_suite` / `suite` / `sub_suite` 欄位**——兩套階層描述同一批測試，手動維護兩份只會不同步。
+
+情境測試（`scenario/`）只有單一案例，不套 builder：builder 的價值是把每檔常數攤提到多個案例上，一個案例攤不到，且情境測試的 marks 只有層級標籤、沒有正/反向之分。
+
+---
+
 `expected` 的形狀依消費者而不同，**不要試圖統一**：
 
 - **API 單步驟**：`{'result': ..., 'schema': ...}`（型別 `Expectation`，`schema` 選填）

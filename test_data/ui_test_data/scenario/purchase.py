@@ -21,17 +21,16 @@ class UIPurchaseRequest:
     product_name: str
 
 
-@dataclass
-class UIPurchaseCase(TestCaseData[UIPurchaseRequest]):
-    """購買流程 UI 的測試案例"""
-
-    parent_suite: str = 'UI 情境測試'
-    suite: str = '購買成功流程'
-    epic: str = 'UI 購買成功流程'
-    feature: str = '商品購買'
+UIPurchaseCase = TestCaseData[UIPurchaseRequest]
 
 
-ui_purchase = CaseBuilder(UIPurchaseCase, sub_suite='購買', marks=[PytestMark.UI_SCENARIO])
+ui_purchase = CaseBuilder(
+    UIPurchaseCase,
+    epic='UI 購買成功流程',
+    feature='商品購買',
+    story_base='購買',
+    marks=[PytestMark.UI_SCENARIO],
+)
 
 
 def generate_ui_purchase_cases() -> List[pytest.param]:
@@ -44,8 +43,8 @@ def generate_ui_purchase_cases() -> List[pytest.param]:
         ui_purchase.positive(
             id='ui_purchase_success',
             title='UI 成功購買商品',
-            description='模擬使用者從登入、瀏覽、加入購物車到完成結帳的完整流程。',
             story='成功購買一件商品',
+            description='模擬使用者從登入、瀏覽、加入購物車到完成結帳的完整流程。',
             severity=AllureSeverity.CRITICAL,
             request=UIPurchaseRequest(
                 username=default_user.account,

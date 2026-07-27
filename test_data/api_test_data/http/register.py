@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from faker import Faker
 
-from test_data.common.base import Expectation, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
@@ -23,19 +23,16 @@ class RegisterRequest:
     password: str
 
 
-@dataclass
-class RegisterCase(TestCaseData[RegisterRequest]):
-    """註冊 API 的測試案例"""
-
-    expected: Expectation
-
-    parent_suite: str = 'HTTP API 測試'
-    suite: str = '註冊'
-    epic: str = '使用者相關功能'
-    feature: str = '註冊功能'
+RegisterCase = TestCaseData[RegisterRequest]
 
 
-register = CaseBuilder(RegisterCase, sub_suite='註冊', marks=[PytestMark.SINGLE, PytestMark.HTTP])
+register = CaseBuilder(
+    RegisterCase,
+    epic='使用者相關功能',
+    feature='註冊功能',
+    story_base='註冊',
+    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+)
 
 SUCCESS_EXPECTED = {'result': HTTP.Auth.Register.SUCCESS, 'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS}
 REPEATED_ACCOUNT_EXPECTED = {'result': HTTP.Auth.Register.REPEATED_ACCOUNT, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE}
@@ -67,6 +64,7 @@ def generate_register_cases() -> list:
     password_all_eng = fake.password(length=10, special_chars=False, digits=False)
     password_all_num = fake.password(length=10, special_chars=False, upper_case=False, lower_case=False)
 
+    success_story = '正向情境 - 使用者成功註冊'
     account_format_story = '反向情境 - 帳號格式錯誤'
     password_format_story = '反向情境 - 密碼格式錯誤'
 
@@ -74,85 +72,85 @@ def generate_register_cases() -> list:
         register.positive(
             id='register_success_dynamic_account',
             title='註冊成功 - 動態新帳號',
-            description='帳號5~20英數, 密碼7~20英數',
-            story='正向情境 - 使用者成功註冊',
-            severity=AllureSeverity.CRITICAL,
             request=RegisterRequest(account=valid_account, password=valid_password),
             expected=SUCCESS_EXPECTED,
+            story=success_story,
+            description='帳號5~20英數, 密碼7~20英數',
+            severity=AllureSeverity.CRITICAL,
         ),
         register.positive(
             id='register_success_5_chars_account_and_7_chars_password',
             title='註冊成功 - 帳號5碼, 密碼7碼(邊界值)',
-            description='帳號5碼',
-            story='正向情境 - 使用者成功註冊',
-            severity=AllureSeverity.CRITICAL,
             request=RegisterRequest(account=account_5_chars, password=password_7_chars),
             expected=SUCCESS_EXPECTED,
+            story=success_story,
+            description='帳號5碼',
+            severity=AllureSeverity.CRITICAL,
         ),
         register.positive(
             id='register_success_20_chars_account_and_20_chars_password',
             title='註冊成功 - 帳號20碼, 密碼20碼(邊界值)',
-            description='帳號20碼',
-            story='正向情境 - 使用者成功註冊',
-            severity=AllureSeverity.CRITICAL,
             request=RegisterRequest(account=account_20_chars, password=account_20_chars),
             expected=SUCCESS_EXPECTED,
+            story=success_story,
+            description='帳號20碼',
+            severity=AllureSeverity.CRITICAL,
         ),
         register.negative(
             id='register_with_existing_account',
             title='已存在帳號',
-            description='反向測試：使用已知的重複帳號',
-            story='反向情境 - 帳號已存在',
-            severity=AllureSeverity.CRITICAL,
             request=RegisterRequest(account=valid_account, password=valid_password),
             expected=REPEATED_ACCOUNT_EXPECTED,
+            story='反向情境 - 帳號已存在',
+            description='反向測試：使用已知的重複帳號',
+            severity=AllureSeverity.CRITICAL,
         ),
         register.negative(
             id='account_too_long',
             title='格式錯誤 - 帳號過長',
-            description='反向測試：帳號長度超過20碼',
-            story=account_format_story,
             request=RegisterRequest(account='a' * 21, password='aa123456'),
             expected=ACCOUNT_FORMAT_EXPECTED,
+            story=account_format_story,
+            description='反向測試：帳號長度超過20碼',
         ),
         register.negative(
             id='account_too_short',
             title='格式錯誤 - 帳號過短',
-            description='反向測試：帳號長度不足5碼',
-            story=account_format_story,
             request=RegisterRequest(account='a' * 4, password='aa123456'),
             expected=ACCOUNT_FORMAT_EXPECTED,
+            story=account_format_story,
+            description='反向測試：帳號長度不足5碼',
         ),
         register.negative(
             id='password_too_short',
             title='格式錯誤 - 密碼過短',
-            description='反向測試：密碼長度6碼',
-            story=password_format_story,
             request=RegisterRequest(account=negative_test_account, password=password_6_chars),
             expected=PASSWORD_FORMAT_EXPECTED,
+            story=password_format_story,
+            description='反向測試：密碼長度6碼',
         ),
         register.negative(
             id='password_too_long',
             title='格式錯誤 - 密碼過長',
-            description='反向測試：密碼長度21碼',
-            story=password_format_story,
             request=RegisterRequest(account=negative_test_account, password=password_21_chars),
             expected=PASSWORD_FORMAT_EXPECTED,
+            story=password_format_story,
+            description='反向測試：密碼長度21碼',
         ),
         register.negative(
             id='password_all_english',
             title='格式錯誤 - 密碼全英',
-            description='反向測試：密碼全英',
-            story=password_format_story,
             request=RegisterRequest(account=negative_test_account, password=password_all_eng),
             expected=PASSWORD_FORMAT_EXPECTED,
+            story=password_format_story,
+            description='反向測試：密碼全英',
         ),
         register.negative(
             id='password_all_numeric',
             title='格式錯誤 - 密碼全數',
-            description='反向測試：密碼全數',
-            story=password_format_story,
             request=RegisterRequest(account=negative_test_account, password=password_all_num),
             expected=PASSWORD_FORMAT_EXPECTED,
+            story=password_format_story,
+            description='反向測試：密碼全數',
         ),
     ]

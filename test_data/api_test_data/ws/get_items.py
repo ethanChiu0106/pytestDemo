@@ -2,36 +2,24 @@
 產生與「透過 WS 獲取所有物品」功能相關的測試資料。
 """
 
-from dataclasses import dataclass
-
 from api.ws_constants import ItemFlow, OpCode
-from test_data.common.base import Expectation, TestCaseData
+from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import PytestMark
 from test_data.common.expectations import WebSocket
 from test_data.common.helpers import create_ws_expectation
 
-
-@dataclass
-class GetItemsRequest:
-    """獲取所有物品 API 的請求資料 (此請求為空)"""
-
-    pass
+# 此 API 不需要請求參數，案例的 request 一律為 None
+GetItemsCase = TestCaseData
 
 
-@dataclass
-class GetItemsCase(TestCaseData[GetItemsRequest]):
-    """透過 WS 獲取所有物品的測試案例"""
-
-    expected: Expectation
-
-    parent_suite: str = 'WebSocket 測試'
-    suite: str = '獲取物品'
-    epic: str = '物品相關功能'
-    feature: str = '透過 WS 獲取物品'
-
-
-get_items_ws = CaseBuilder(GetItemsCase, sub_suite='獲取所有物品', marks=[PytestMark.SINGLE, PytestMark.WS])
+get_items_ws = CaseBuilder(
+    GetItemsCase,
+    epic='物品相關功能',
+    feature='透過 WS 獲取物品',
+    story_base='獲取所有物品',
+    marks=[PytestMark.SINGLE, PytestMark.WS],
+)
 
 
 def generate_get_items_cases() -> list:
@@ -44,9 +32,8 @@ def generate_get_items_cases() -> list:
         get_items_ws.positive(
             id='get_all_items_ws_success',
             title='成功獲取所有物品列表',
-            description='測試連線後，是否可以成功獲取所有物品的列表。',
-            story='正向情境 - 獲取所有物品',
-            request=GetItemsRequest(),
+            request=None,
             expected={'result': success_expected, 'schema': WebSocket.Schemas.ITEM_LIST},
+            description='測試連線後，是否可以成功獲取所有物品的列表。',
         ),
     ]

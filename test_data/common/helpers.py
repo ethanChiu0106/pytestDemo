@@ -17,10 +17,9 @@ fake = Faker('zh_TW')
 
 PYTEST_MARKS_MAP = {member: getattr(pytest.mark, member.value) for member in PytestMark}
 
+# 只掛 Behaviors 階層。Suites (parentSuite / suite) 由 allure-pytest 依模組路徑
+# 自動推導，刻意不列在此——加回來等於同一批測試維護兩套階層。
 ALLURE_TAGS_MAP = {
-    'parent_suite': allure.parent_suite,
-    'suite': allure.suite,
-    'sub_suite': allure.sub_suite,
     'epic': allure.epic,
     'feature': allure.feature,
     'story': allure.story,
