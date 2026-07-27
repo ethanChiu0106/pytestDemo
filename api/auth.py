@@ -35,6 +35,27 @@ class AuthAPI(BaseRequest):
         result = self.post('/auth/login', json=json_data)
         return result
 
+    @staticmethod
+    def ws_url_from(login_result: dict) -> str:
+        """從登入回應取出 WebSocket 的連線位址
+
+        WebSocket 的位址由登入回應提供，因此需要授權的 WS 操作都得先登入。
+        此處是這段解構的唯一出處，登入回應的形狀若有變動只需改這裡。
+
+        Args:
+            login_result: `login` 回傳的結果。
+
+        Returns:
+            WebSocket 的連線位址。
+
+        Raises:
+            ValueError: 如果回應中找不到 'ws_url'
+        """
+        ws_url = login_result.get('data', {}).get('ws_url')
+        if not ws_url:
+            raise ValueError(f"登入成功，但在 Response 中找不到 'ws_url': {login_result}")
+        return ws_url
+
     def change_password(self, old_password: str, new_password: str) -> dict:
         """變更已登入使用者的密碼
 

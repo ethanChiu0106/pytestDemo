@@ -43,13 +43,12 @@ class TestUserProfileScenario:
             login_data = login_result.get('data')
             # 後續需授權的步驟改用這個已認證的 client，不影響上面的匿名 auth_api
             authed_auth_api = api_provider.with_auth(login_data.get('access_token')).get(AuthAPI)
-            ws_url = login_data.get('ws_url')
+            ws_url = auth_api.ws_url_from(login_result)
             init_name = login_data.get('player_info').get('username')
         # 初始化 WebSocket 連線
-        ws = AsyncBaseWS(ws_url)
-        await ws.connect()
-        player = PlayerWS(ws)
-        try:
+        async with AsyncBaseWS(ws_url) as ws:
+            player = PlayerWS(ws)
+
             # 步驟 3: 驗證初始使用者資料
             step_3 = '步驟 3: 驗證初始使用者資料'
             with allure.step(step_3):
@@ -68,10 +67,7 @@ class TestUserProfileScenario:
                     f"使用者名稱應為 '{case.request.new_name}'"
                 )
 
-        finally:
-            await ws.close_connect()
-
-        # 步驟 6: 變更密碼
+        # 步驟 5: 變更密碼
         step_5 = '步驟 5: 變更密碼'
         with allure.step(step_5):
             logger.info(step_5)

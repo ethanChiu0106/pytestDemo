@@ -13,7 +13,13 @@ logger = logging.getLogger(__name__)
 
 
 class AsyncBaseWS:
-    """一個非同步 WebSocket 客戶端，負責處理連線、訊息收發與心跳"""
+    """一個非同步 WebSocket 客戶端，負責處理連線、訊息收發與心跳
+
+    以 async context manager 使用，離開時保證關閉連線與背景任務:
+
+        async with AsyncBaseWS(ws_url) as ws:
+            ...
+    """
 
     def __init__(self, ws_url: str, receive_init_msgs: bool = True) -> None:
         """初始化 WebSocket 客戶端
@@ -31,7 +37,29 @@ class AsyncBaseWS:
         self.unsolicited_messages = asyncio.Queue()
         self.player_init_info = None
 
-    async def connect(self):
+    @allure.step('WS connect')
+    async def __aenter__(self) -> 'AsyncBaseWS':
+        """建立連線
+
+        連線途中拋錯時會自行清理已啟動的背景任務——`async with` 在 `__aenter__`
+        失敗時不會呼叫 `__aexit__`，而 `_connect` 是先啟動 listener 才去收初始訊息，
+        收訊息那步失敗就會殘留 task。
+
+        Returns:
+            已連線的自己。
+        """
+        try:
+            await self._connect()
+        except BaseException:
+            await self._close_connect()
+            raise
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        """關閉連線與所有背景任務"""
+        await self._close_connect()
+
+    async def _connect(self):
         """建立 WebSocket 連線，並啟動背景監聽和心跳任務"""
         self._websocket = await websockets.connect(self.ws_url)
 
@@ -240,8 +268,11 @@ class AsyncBaseWS:
             logger.info('心跳任務未在執行或已完成')
 
     @allure.step('關閉 WebSocket 連線')
-    async def close_connect(self):
-        """依序停止所有背景任務，並關閉 WebSocket 連線"""
+    async def _close_connect(self):
+        """依序停止所有背景任務，並關閉 WebSocket 連線
+
+        可在連線尚未建立時安全呼叫，供 `__aenter__` 的失敗清理使用。
+        """
         await self.stop_polling()
         await self.stop_listener()
         if self._websocket:

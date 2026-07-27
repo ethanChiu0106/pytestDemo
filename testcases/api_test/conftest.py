@@ -150,15 +150,8 @@ async def ws_connect(auth_api: AuthAPI, user_data: User) -> AsyncIterator[AsyncB
         ValueError: 如果登入後找不到 WebSocket URL。
     """
     result = auth_api.login(user_data.account, user_data.password)
-    ws_url = result.get('data', {}).get('ws_url')
-    if not ws_url:
-        raise ValueError(f"登入成功，但在Response中找不到 'ws_url': {result}")
-
-    with allure.step('WS connect'):
-        ws_client = AsyncBaseWS(ws_url)
-        await ws_client.connect()
-    yield ws_client
-    await ws_client.close_connect()
+    async with AsyncBaseWS(auth_api.ws_url_from(result)) as ws:
+        yield ws
 
 
 # --- User Creation Fixtures (Original content) ---
@@ -207,9 +200,3 @@ def setup_default_user(user_creator: Callable[[str], None]):
 def setup_change_password_user(user_creator: Callable[[str], None]):
     """為密碼變更測試，建立專用的測試帳號。"""
     user_creator('change_password_user')
-
-
-@pytest.fixture(scope='package')
-def setup_duplicate_phone_user(user_creator: Callable[[str], None]):
-    """為手機綁定測試，建立專用的測試帳號。"""
-    user_creator('duplicate_phone_user')
