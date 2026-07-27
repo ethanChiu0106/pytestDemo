@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import platform
 import shutil
 from pathlib import Path
@@ -6,6 +6,7 @@ from pathlib import Path
 import allure
 import pytest
 
+from test_data.common.base import TestCaseData
 from utils.config_loader import set_current_env
 
 logger = logging.getLogger(__name__)
@@ -35,24 +36,31 @@ def pytest_configure(config):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
-    """將 parametrize 傳入的 case 物件上的 title 與 description 套用到 Allure 報告。
+    """套用 case 的 Allure 標題與描述，並記錄測項的開始與結束。
 
-    這兩個標籤無法透過 `create_param_from_case` 隨其他標籤一起掛上：
-    `allure.title` 不是 MarkDecorator，不能當作 pytest.param 的 mark。
-    而 `allure.dynamic` 必須在 **call 階段**呼叫才會生效——寫成 fixture (setup 階段)
-    不會有作用，因此才用 hookwrapper。此寫法對 sync 與 async 測試皆適用。
+    Allure 標籤是**被迫**放在 call 階段：`allure.title` 不是 MarkDecorator，不能像
+    其他標籤那樣透過 `create_param_from_case` 掛成 pytest.param 的 mark；而
+    `allure.dynamic` 寫在 fixture (setup 階段) 不會有作用，只能用 hookwrapper。
+    此寫法對 sync 與 async 測試皆適用。
+
+    日誌是**刻意**放在 call 階段：「開始/結束執行測項」要框住的是測項本身，登入等
+    前置條件 (setup 階段) 與密碼還原等清理 (teardown 階段) 都排除在外。改成 autouse
+    fixture 會讓它排到最前面，導致前置條件被框進來。
 
     Args:
-        item: 當前執行的測試項目。僅處理參數名為 `case` 的 parametrize。
+        item: 當前執行的測試項目。僅處理參數名為 `case`、型別為 `TestCaseData` 的 parametrize。
     """
     callspec = getattr(item, 'callspec', None)
     case = callspec.params.get('case') if callspec else None
-    if case is not None:
-        if getattr(case, 'title', None):
+    if isinstance(case, TestCaseData):
+        if case.title:
             allure.dynamic.title(case.title)
-        if getattr(case, 'description', None):
+        if case.description:
             allure.dynamic.description(case.description)
+
+    logger.info('*************** 開始執行測項 ***************')
     yield
+    logger.info('*************** 結束執行測項 ***************')
 
 
 # --- 核心 Fixtures ---
@@ -101,24 +109,3 @@ def allure_environment_setup(request: pytest.FixtureRequest, shared_used_urls: s
         used_urls_str = 'No clients were used in this test run.'
     base_path = Path(__file__).resolve().parent
     write_allure_environment(env, used_urls_str, base_path)
-
-
-@pytest.fixture
-def test_case_setup_and_teardown():
-    """在每個測試案例執行前後，印出開始與結束的日誌。"""
-    logger.info('*************** 開始執行測項 ***************')
-    yield
-    logger.info('*************** 結束執行測項 ***************')
-
-
-def pytest_collection_modifyitems(items):
-    """修改 pytest 收集到的所有測試案例。
-
-    主要用於自動為所有測試案例加上 `test_case_setup_and_teardown` fixture。
-
-    Args:
-        items: pytest 收集到的所有測試案例物件列表。
-    """
-    for item in items:
-        if 'test_case_setup_and_teardown' not in item.fixturenames:
-            item.fixturenames.append('test_case_setup_and_teardown')
