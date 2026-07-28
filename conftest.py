@@ -7,7 +7,7 @@ import allure
 import pytest
 
 from test_data.common.base import TestCaseData
-from utils.config_loader import set_current_env
+from utils.config_loader import get_config, set_current_env
 
 # pytest 只改寫測試檔與 conftest 內的斷言。不註冊的話，`case_verify_tool` 裡的
 # 比對失敗只會拋出光禿禿的 `AssertionError`，看不到實際值與預期值的差異。
@@ -68,28 +68,15 @@ def pytest_runtest_call(item):
     logger.info('*************** 結束執行測項 ***************')
 
 
-# --- 核心 Fixtures ---
-
-
-@pytest.fixture(scope='session')
-def shared_used_urls() -> set:
-    """提供一個共用集合，用於記錄所有在測試中使用過的 URL。
-
-    Returns:
-        一個 session 範圍的空集合。
-    """
-    return set()
-
-
 # --- 其他 Hooks ---
 
 
-def write_allure_environment(environment_name: str, url: str, base_path: Path):
+def write_allure_environment(environment_name: str, urls: str, base_path: Path):
     """將環境資訊寫入 Allure 報告用的 `environment.properties` 檔案。
 
     Args:
         environment_name: 當前測試環境的名稱 (例如 'qa', 'dev')。
-        url: 測試過程中使用的主要服務 URL。
+        urls: 該環境各服務的名稱與位址，以逗號分隔。
         base_path: 專案的根目錄路徑。
     """
     allure_result_path = base_path / 'allure-results'
@@ -99,18 +86,25 @@ def write_allure_environment(environment_name: str, url: str, base_path: Path):
     with open(environment_path, 'w') as f:
         f.write(f'os={platform.system()}\n')
         f.write(f'python_version={platform.python_version()}\n')
-        f.write(f'environment={environment_name}, {url}\n')
+        f.write(f'environment={environment_name}, {urls}\n')
     if source_executor_path.exists():
         shutil.copy(source_executor_path, allure_result_path)
 
 
 @pytest.fixture(scope='session', autouse=True)
-def allure_environment_setup(request: pytest.FixtureRequest, shared_used_urls: set):
-    """在測試 session 結束後，收集環境資訊並寫入 Allure 報告。"""
+def allure_environment_setup(request: pytest.FixtureRequest):
+    """在測試 session 結束後，收集環境資訊並寫入 Allure 報告。
+
+    位址取自當前環境的設定，而非執行期收集——Allure 的環境區塊描述的是
+    「這份報告打的是哪個環境」，屬於整個 launch 不變的資訊。逐次請求打了什麼
+    已記錄在各測項的 step 與 log 中。
+    """
     yield
-    env = request.config.getoption('--env')
-    used_urls_str = ', '.join(sorted(list(shared_used_urls)))
-    if not used_urls_str:
-        used_urls_str = 'No clients were used in this test run.'
+    config = get_config()
+    urls = dict(config.urls)
+    cli_base_url = request.config.getoption('base_url', None)
+    if cli_base_url:
+        urls['ui'] = cli_base_url
+    urls_str = ', '.join(f'{name}={url}' for name, url in sorted(urls.items()))
     base_path = Path(__file__).resolve().parent
-    write_allure_environment(env, used_urls_str, base_path)
+    write_allure_environment(config.env, urls_str, base_path)

@@ -20,7 +20,6 @@ class ApiClientProvider:
         self,
         session: requests.Session,
         config: Config,
-        used_urls_set: set,
         default_headers: dict = None,
     ):
         """初始化 Provider
@@ -28,13 +27,11 @@ class ApiClientProvider:
         Args:
             session: 共用的 requests.Session 物件。
             config: 當前環境的測試設定，用於查詢各服務的 base URL。
-            used_urls_set: 共用的集合，用於記錄所有呼叫過的伺服器網址。
             default_headers: 由此 Provider 建立的 client 都會帶上的 headers。
                 用於表達 Provider 的身分 (例如已認證)，見 `with_auth`。
         """
         self._session = session
         self._config = config
-        self._used_urls = used_urls_set
         self._default_headers = default_headers or {}
 
     def with_auth(self, token: str) -> 'ApiClientProvider':
@@ -42,7 +39,7 @@ class ApiClientProvider:
 
         回傳的是新的 Provider 實例，原本的 Provider 不受影響，因此匿名與已認證
         兩種身分可以並存 (也可同時持有多個不同使用者的 Provider)。
-        新舊 Provider 共用同一個 session 與 used_urls 集合。
+        新舊 Provider 共用同一個 session。
 
         Args:
             token: 登入取得的 access token (不含 'Bearer ' 前綴)。
@@ -53,7 +50,6 @@ class ApiClientProvider:
         return ApiClientProvider(
             self._session,
             self._config,
-            self._used_urls,
             default_headers={**self._default_headers, 'Authorization': f'Bearer {token}'},
         )
 
@@ -85,6 +81,5 @@ class ApiClientProvider:
             )
 
         base_url = self._config.url(target_service.value)
-        self._used_urls.add(base_url)
 
         return self._create_client(api_class, base_url)

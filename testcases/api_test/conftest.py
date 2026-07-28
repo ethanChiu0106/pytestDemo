@@ -32,21 +32,19 @@ def shared_session() -> Generator[requests.Session, Any, None]:
 
 
 @pytest.fixture(scope='package')
-def api_provider(shared_session: requests.Session, shared_used_urls: set) -> ApiClientProvider:
+def api_provider(shared_session: requests.Session) -> ApiClientProvider:
     """提供一個 package 等級、已設定好的 API Client 提供者。
 
-    組裝 `ApiClientProvider` 所需的所有依賴，包含共用的 `requests.Session`、
-    當前環境的設定，以及用於 Allure 報告的 `shared_used_urls` 集合。
+    組裝 `ApiClientProvider` 所需的依賴，包含共用的 `requests.Session` 與當前環境的設定。
     此 fixture 作為所有 API 測試的統一入口，確保所有 API Client 都透過一致的方式建立和管理。
 
     Args:
         shared_session: 整個測試 package 中共用的 `requests.Session` 物件。
-        shared_used_urls: 用於記錄所有被呼叫過的 URL 的集合，以產生 Allure 報告 (來自根 conftest.py)。
 
     Returns:
         一個已完全設定好、可供使用的 ApiClientProvider 物件。
     """
-    return ApiClientProvider(shared_session, get_config(), shared_used_urls)
+    return ApiClientProvider(shared_session, get_config())
 
 
 @pytest.fixture(scope='package')

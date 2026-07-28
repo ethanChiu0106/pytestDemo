@@ -181,7 +181,7 @@ pytest-demo/
 ├── test_data/          # 測試案例所需的資料模型與生成邏輯
 │   ├── api_test_data/  # API 測試資料 (HTTP, WS, Scenario)
 │   └── ui_test_data/   # UI 測試資料 (Login, Purchase)
-├── utils/              # 工具函數和基礎類 (ConfigLoader, BaseRequest, Allure utils 等)
+├── utils/              # 工具函數和基礎類 (config_loader, BaseRequest, Allure utils 等)
 ├── allure-results/     # Allure 測試結果輸出目錄
 ├── allure-report/      # 生成的 Allure 報告目錄
 ├── conftest.py         # Pytest fixture 和 hook 函數 (根目錄)

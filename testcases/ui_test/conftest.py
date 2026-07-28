@@ -35,12 +35,6 @@ def base_url(request: pytest.FixtureRequest) -> str:
     return get_config().url('ui')
 
 
-@pytest.fixture(scope='package', autouse=True)
-def add_ui_url_to_allure_report(base_url: str, shared_used_urls: set):
-    """自動將 UI base URL 添加到共用 URL 集合中，以便寫入 Allure 報告。"""
-    shared_used_urls.add(base_url)
-
-
 @pytest.fixture(scope='session', autouse=True)
 def setup_ui_test_id(playwright: Playwright):
     """
