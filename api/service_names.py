@@ -13,4 +13,3 @@ class Service(Enum):
     """定義所有 API 服務的名稱"""
 
     FRONT = 'front'
-    BACK = 'back'
