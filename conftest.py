@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import platform
 import shutil
 from pathlib import Path

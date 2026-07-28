@@ -59,9 +59,7 @@ class Config:
             ConfigError: 如果該環境的設定中找不到此 key。
         """
         if key not in self.users:
-            raise ConfigError(
-                f"環境 '{self.env}' 的 'users' 中找不到 '{key}'，可用的有: {sorted(self.users)}"
-            )
+            raise ConfigError(f"環境 '{self.env}' 的 'users' 中找不到 '{key}'，可用的有: {sorted(self.users)}")
         return self.users[key]
 
     def url(self, service: str) -> str:
@@ -77,9 +75,7 @@ class Config:
             ConfigError: 如果該環境的設定中找不到此服務。
         """
         if service not in self.urls:
-            raise ConfigError(
-                f"環境 '{self.env}' 的 'urls' 中找不到服務 '{service}'，可用的有: {sorted(self.urls)}"
-            )
+            raise ConfigError(f"環境 '{self.env}' 的 'urls' 中找不到服務 '{service}'，可用的有: {sorted(self.urls)}")
         return self.urls[service]
 
 

@@ -154,7 +154,7 @@ async def ws_connect(auth_api: AuthAPI, user_data: User) -> AsyncIterator[AsyncB
         yield ws
 
 
-# --- User Creation Fixtures (Original content) ---
+# --- User Creation Fixtures ---
 
 
 @pytest.fixture(scope='package')

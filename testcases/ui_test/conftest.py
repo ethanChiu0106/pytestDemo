@@ -6,7 +6,6 @@ from playwright.sync_api import Playwright
 
 from utils.config_loader import get_config
 
-# 獲取 logger 實例
 logger = logging.getLogger(__name__)
 
 

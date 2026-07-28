@@ -13,7 +13,6 @@ from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
 from utils.config_loader import get_config
 
-# 初始化 Faker
 fake = Faker('zh_TW')
 
 
@@ -46,7 +45,6 @@ def generate_change_password_cases() -> list:
     """
     產生變更密碼 API 的測試情境。
     """
-    # 指定此測試案例使用 change_password_user 的資料
     target_user = get_config().user('change_password_user')
     old = target_user.password
     new = fake.password(length=10, special_chars=False)

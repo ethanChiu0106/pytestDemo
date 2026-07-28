@@ -34,7 +34,6 @@ class AsyncBaseWS:
         self.polling_task: asyncio.Task | None = None
         self.listener_task: asyncio.Task | None = None
         self.message_queue = asyncio.Queue()
-        self.unsolicited_messages = asyncio.Queue()
         self.player_init_info = None
 
     @allure.step('WS connect')
@@ -63,10 +62,8 @@ class AsyncBaseWS:
         """建立 WebSocket 連線，並啟動背景監聽和心跳任務"""
         self._websocket = await websockets.connect(self.ws_url)
 
-        # 啟動背景任務來持續監聽所有傳入的訊息
         self.listener_task = asyncio.create_task(self.listen_for_messages())
 
-        # 根據旗標，決定是否接收連線後的初始訊息
         if self.receive_init_msgs:
             message = await self.receive_msg()
             if message and 'data' in message:
@@ -74,7 +71,6 @@ class AsyncBaseWS:
             else:
                 logger.error(f'接收到的初始訊息格式不正確或為空: {message}')
 
-        # 啟動定期發送 Ping 的心跳任務
         self.polling_task = asyncio.create_task(self.polling_ping())
 
     async def listen_for_messages(self):
@@ -179,9 +175,7 @@ class AsyncBaseWS:
                         result = ResultBase(response_data).get_result()
                         return result
                     else:
-                        print(f'Received (Unexpected) => {response_data}')
                         logger.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, response_data)
-                        await self.unsolicited_messages.put(response_data)
 
         except TimeoutError:
             logger.error('超時：在 %s 秒內未收到期望的 op_code %s', timeout, expected_op_code)
@@ -233,7 +227,6 @@ class AsyncBaseWS:
         dict_data = {'op_code': OpCode.C2SPing.value}
         try:
             while True:
-                print('Sending ping...')
                 await self.send_msg(dict_data)
                 await asyncio.sleep(7)
         except asyncio.CancelledError:

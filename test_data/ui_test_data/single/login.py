@@ -14,7 +14,6 @@ from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import UI
 from utils.config_loader import get_config
 
-# 初始化 Faker
 fake = Faker('zh_TW')
 
 

@@ -6,6 +6,7 @@
 
 這有助於保持範本檔案與實際設定檔的結構同步，同時避免洩漏敏感資訊。
 """
+
 from pathlib import Path
 
 import yaml

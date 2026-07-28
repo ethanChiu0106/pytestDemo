@@ -12,7 +12,6 @@ from faker import Faker
 from .base import TestCaseData
 from .enums import PytestMark
 
-# 初始化 Faker
 fake = Faker('zh_TW')
 
 PYTEST_MARKS_MAP = {member: getattr(pytest.mark, member.value) for member in PytestMark}
@@ -65,7 +64,6 @@ def create_param_from_case(case: TestCaseData, id: str = None) -> pytest.param:
         if value:
             all_marks.append(allure_marker_func(value))
 
-    # 使用案例的 title 或提供的 id 作為測試案例的 ID
     case_id = id or getattr(case, 'title', 'N/A')
 
     return pytest.param(case, marks=all_marks, id=case_id)

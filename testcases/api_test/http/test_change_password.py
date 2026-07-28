@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from api.auth import AuthAPI
@@ -6,6 +8,8 @@ from test_data.common.expectations import HTTP
 from utils.api_provider import ApiClientProvider
 from utils.case_verify_tool import verify_case_auto
 from utils.config_loader import User
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -29,7 +33,7 @@ def password_change_session(
         original_password = user_data.password
         new_password = case.request.new_password
 
-        print(f'[Teardown] 變更密碼 ({new_password}) 回原始密碼 ({original_password})')
+        logger.info('[Teardown] 變更密碼 (%s) 回原始密碼 (%s)', new_password, original_password)
         result = auth_api.change_password(new_password, original_password)
         assert result.get('code') == 0, 'Teardown 變更密碼失敗'
 

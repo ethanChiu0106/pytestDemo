@@ -13,7 +13,6 @@ from test_data.common.expectations import HTTP
 from test_data.common.helpers import generate_accounts
 from utils.config_loader import get_config
 
-# 初始化 Faker
 fake = Faker('zh_TW')
 
 
