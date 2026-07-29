@@ -28,7 +28,7 @@ change_password = CaseBuilder(
     epic='變更密碼',
     feature='變更密碼測試',
     story_base='變更密碼',
-    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+    marks=[PytestMark.SINGLE],
 )
 
 PASSWORD_FORMAT_EXPECTED = {

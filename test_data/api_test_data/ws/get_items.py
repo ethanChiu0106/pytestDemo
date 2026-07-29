@@ -18,7 +18,7 @@ get_items_ws = CaseBuilder(
     epic='物品相關功能',
     feature='透過 WS 獲取物品',
     story_base='獲取所有物品',
-    marks=[PytestMark.SINGLE, PytestMark.WS],
+    marks=[PytestMark.SINGLE],
 )
 
 

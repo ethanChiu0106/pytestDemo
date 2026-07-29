@@ -32,7 +32,7 @@ update_name = CaseBuilder(
     epic='使用者相關功能',
     feature='更新名稱功能',
     story_base='變更名稱',
-    marks=[PytestMark.SINGLE, PytestMark.WS],
+    marks=[PytestMark.SINGLE],
 )
 
 SUCCESS_EXPECTED = {'result': success_expected, 'schema': WebSocket.Schemas.PLAYER_INFO}

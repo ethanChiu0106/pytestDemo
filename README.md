@@ -88,7 +88,7 @@
 
 目前 **API 測試案例** (包括 HTTP 和 WebSocket) 是針對**自架的簡易後端 Server** 所設計和驗證的。
 
-**若要直接執行這些 API 相關的測試案例** (例如使用 `-m http`, `-m ws`, `-m scenario` 或執行所有測試)，需**先下載並啟用該 Server**。
+**若要直接執行這些 API 相關的測試案例** (例如執行 `testcases/api_test` 下的測試，或執行所有測試)，需**先下載並啟用該 Server**。
 
 **Server 專案連結：** [`mock-server`](<https://github.com/ethanChiu0106/mockServer>)。
 
@@ -102,19 +102,21 @@
     uv run pytest --env qa
     ```
 
-*   **僅執行 UI 情境測試**：
+*   **執行所有 API 測試 / 所有 UI 測試**（結構用路徑選）：
     ```bash
-    uv run pytest --env qa -m ui_scenario
+    uv run pytest --env qa testcases/api_test
+    uv run pytest --env qa testcases/ui_test
     ```
 
-*   **僅執行 API 的 HTTP 測試**：
+*   **僅執行 API 的 HTTP 測試**（子目錄同理：`ws/`、`scenario/`）：
     ```bash
-    uv run pytest --env qa -m http
+    uv run pytest --env qa testcases/api_test/http
     ```
 
-*   **執行所有 API 測試 (HTTP + WS)**：
+*   **跨 API/UI 選層級或方向**（橫切維度用 marker 選）：
     ```bash
-    uv run pytest --env qa -m "http or ws"
+    uv run pytest --env qa -m scenario
+    uv run pytest --env qa -m negative
     ```
 
 ### 生成並查看 Allure 報告

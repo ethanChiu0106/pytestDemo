@@ -95,7 +95,7 @@ get_item = CaseBuilder(
     epic='物品相關功能',
     feature='獲取物品',
     story_base='獲取物品',
-    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+    marks=[PytestMark.SINGLE],
 )
 
 get_item.negative(id='get_item_not_found', title='獲取不存在的物品', request=..., expected=...)

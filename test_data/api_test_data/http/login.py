@@ -28,7 +28,7 @@ login = CaseBuilder(
     epic='使用者相關功能',
     feature='登入功能',
     story_base='登入',
-    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+    marks=[PytestMark.SINGLE],
 )
 
 

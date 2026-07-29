@@ -9,14 +9,12 @@ class PytestMark(Enum):
     使用 Enum 可以確保型別安全並提供自動完成功能。
     """
 
-    WS = 'ws'
-    HTTP = 'http'
     POSITIVE = 'positive'
     NEGATIVE = 'negative'
     SINGLE = 'single'
     SCENARIO = 'scenario'
-    UI_SINGLE = 'ui_single'
-    UI_SCENARIO = 'ui_scenario'
+    # 映射到 pytest 內建的 skip(非自訂 marker,不需在 pytest.ini 註冊),
+    # 用途是暫時停用個別資料案例,不是選跑
     SKIP = 'skip'
 
 

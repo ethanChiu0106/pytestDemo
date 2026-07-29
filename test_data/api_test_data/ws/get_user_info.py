@@ -23,7 +23,7 @@ get_user_info = CaseBuilder(
     epic='使用者相關功能',
     feature='取得使用者資訊功能',
     story_base='取得使用者資訊',
-    marks=[PytestMark.SINGLE, PytestMark.WS],
+    marks=[PytestMark.SINGLE],
 )
 
 

@@ -29,7 +29,7 @@ ui_purchase = CaseBuilder(
     epic='UI 購買成功流程',
     feature='商品購買',
     story_base='購買',
-    marks=[PytestMark.UI_SCENARIO],
+    marks=[PytestMark.SCENARIO],
 )
 
 

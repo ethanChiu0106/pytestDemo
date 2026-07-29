@@ -32,7 +32,7 @@ bind_phone = CaseBuilder(
     epic='使用者相關功能',
     feature='綁定手機功能',
     story_base='綁定手機',
-    marks=[PytestMark.SINGLE, PytestMark.WS],
+    marks=[PytestMark.SINGLE],
 )
 
 

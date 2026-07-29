@@ -31,7 +31,7 @@ register = CaseBuilder(
     epic='使用者相關功能',
     feature='註冊功能',
     story_base='註冊',
-    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+    marks=[PytestMark.SINGLE],
 )
 
 SUCCESS_EXPECTED = {'result': HTTP.Auth.Register.SUCCESS, 'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS}

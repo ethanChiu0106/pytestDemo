@@ -27,7 +27,7 @@ class CaseBuilder(Generic[CaseType]):
             epic='使用者相關功能',
             feature='更新名稱功能',
             story_base='變更名稱',
-            marks=[PytestMark.SINGLE, PytestMark.WS],
+            marks=[PytestMark.SINGLE],
         )
 
         update_name.negative(id='...', title='...', request=..., expected=...)

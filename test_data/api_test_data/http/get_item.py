@@ -25,7 +25,7 @@ get_item = CaseBuilder(
     epic='物品相關功能',
     feature='獲取物品',
     story_base='獲取物品',
-    marks=[PytestMark.SINGLE, PytestMark.HTTP],
+    marks=[PytestMark.SINGLE],
 )
 
 NOT_FOUND_EXPECTED = {'result': HTTP.Item.GetItem.NOT_FOUND, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE}
