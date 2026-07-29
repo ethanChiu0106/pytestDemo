@@ -126,6 +126,8 @@ allure generate allure-results --clean -o allure-report
 allure open allure-report
 ```
 
+> **關於 Trend**：Allure 2 的趨勢圖靠 `allure-results/history` 累積，而 `--clean-alluredir` 會在每次 pytest 啟動時清空該目錄。本專案已在 conftest 的 session 結束時自動把上一份 `allure-report/history` 接回去，並遞增 `executor.json` 的 `buildOrder`，因此照上面的指令跑即可累積趨勢（官方上限為最近 20 份報告）。**前提是不要刪掉 `allure-report/`**——刪了等於把歷史一併清空。
+
 Allure Report 效果
 
 <img width="1920" height="895" alt="API-正向情境" src="https://github.com/user-attachments/assets/ee8b3a1d-22ba-4631-bac1-fee1f0f372d1" />

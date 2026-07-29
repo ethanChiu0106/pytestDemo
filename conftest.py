@@ -1,3 +1,4 @@
+import json
 import logging
 import platform
 import shutil
@@ -71,8 +72,56 @@ def pytest_runtest_call(item):
 # --- 其他 Hooks ---
 
 
-def write_allure_environment(environment_name: str, urls: str, base_path: Path):
-    """將環境資訊寫入 Allure 報告用的 `environment.properties` 檔案。
+def carry_over_history(report_path: Path, result_path: Path) -> int:
+    """接續上一份報告的歷史紀錄，並回傳先前已完成的 build 數。
+
+    Allure 2 沒有內建的歷史接續機制：`allure generate` 只認 `allure-results/history`，
+    而 `--clean-alluredir` 會在 pytest 啟動時清空該目錄。因此複製只能發生在測試跑完
+    之後、產報告之前，也就是這裡。少了這一步，Trend 每次都會從零開始而只有一個點。
+
+    Args:
+        report_path: 上一份 Allure 報告的目錄。
+        result_path: 本次執行的 Allure 結果目錄。
+
+    Returns:
+        先前已完成的 build 數；沒有可用歷史時回傳 0。
+    """
+    history_path = report_path / 'history'
+    if not history_path.is_dir():
+        return 0
+    shutil.copytree(history_path, result_path / 'history', dirs_exist_ok=True)
+    trend_path = history_path / 'history-trend.json'
+    try:
+        trend = json.loads(trend_path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError):
+        logger.warning('讀不到 %s，build 編號改從頭計算', trend_path)
+        return 0
+    return len(trend)
+
+
+def write_executor(source_path: Path, result_path: Path, build_order: int):
+    """以專案根目錄的 executor.json 為底，補上 build 編號後寫入 Allure 結果目錄。
+
+    `buildOrder` 是趨勢圖上各 build 的識別碼，沒有它每次執行都會落在同一欄。
+    來源檔不會被更動，遞增的編號只存在於本次結果中。
+
+    Args:
+        source_path: 專案根目錄的 executor.json。
+        result_path: 本次執行的 Allure 結果目錄。
+        build_order: 本次執行的 build 編號。
+    """
+    if not source_path.exists():
+        return
+    executor = json.loads(source_path.read_text(encoding='utf-8'))
+    build_name = executor.get('buildName', 'Local Run')
+    executor['buildOrder'] = build_order
+    executor['buildName'] = f'{build_name} #{build_order}'
+    target_path = result_path / 'executor.json'
+    target_path.write_text(json.dumps(executor, ensure_ascii=False, indent=2), encoding='utf-8')
+
+
+def write_allure_metadata(environment_name: str, urls: str, base_path: Path):
+    """寫入 Allure 報告所需的環境資訊、歷史紀錄與 executor 檔案。
 
     Args:
         environment_name: 當前測試環境的名稱 (例如 'qa', 'dev')。
@@ -80,20 +129,19 @@ def write_allure_environment(environment_name: str, urls: str, base_path: Path):
         base_path: 專案的根目錄路徑。
     """
     allure_result_path = base_path / 'allure-results'
-    source_executor_path = base_path / 'executor.json'
     allure_result_path.mkdir(parents=True, exist_ok=True)
     environment_path = allure_result_path / 'environment.properties'
     with open(environment_path, 'w') as f:
         f.write(f'os={platform.system()}\n')
         f.write(f'python_version={platform.python_version()}\n')
         f.write(f'environment={environment_name}, {urls}\n')
-    if source_executor_path.exists():
-        shutil.copy(source_executor_path, allure_result_path)
+    build_order = carry_over_history(base_path / 'allure-report', allure_result_path) + 1
+    write_executor(base_path / 'executor.json', allure_result_path, build_order)
 
 
 @pytest.fixture(scope='session', autouse=True)
 def allure_environment_setup(request: pytest.FixtureRequest):
-    """在測試 session 結束後，收集環境資訊並寫入 Allure 報告。
+    """在測試 session 結束後，收集報告所需的中繼資料並寫入 Allure 結果目錄。
 
     位址取自當前環境的設定，而非執行期收集——Allure 的環境區塊描述的是
     「這份報告打的是哪個環境」，屬於整個 launch 不變的資訊。逐次請求打了什麼
@@ -107,4 +155,4 @@ def allure_environment_setup(request: pytest.FixtureRequest):
         urls['ui'] = cli_base_url
     urls_str = ', '.join(f'{name}={url}' for name, url in sorted(urls.items()))
     base_path = Path(__file__).resolve().parent
-    write_allure_environment(config.env, urls_str, base_path)
+    write_allure_metadata(config.env, urls_str, base_path)
