@@ -52,17 +52,18 @@ def generate_register_cases() -> list:
     """
 
     # --- 資料準備 ---
-    accounts = generate_accounts(2)
-    valid_account = accounts[0]
+    # 會真的建立帳號的案例才需要隨機值，否則第二次執行就會撞「帳號已存在」
+    valid_account = generate_accounts(1)[0]
     valid_password = generate_accounts(1, min_len=7)[0]
-    negative_test_account = accounts[1]
     account_5_chars = fake.password(length=5, special_chars=False)
     account_20_chars = fake.password(length=20, special_chars=False)
     password_7_chars = fake.password(length=7, special_chars=False)
-    password_6_chars = fake.password(length=6, special_chars=False)
-    password_21_chars = fake.password(length=21, special_chars=False)
-    password_all_eng = fake.password(length=10, special_chars=False, digits=False)
-    password_all_num = fake.password(length=10, special_chars=False, upper_case=False, lower_case=False)
+    # 密碼格式在帳號重複檢查之前就被擋下，此帳號不會被建立，故可固定
+    negative_test_account = 'formatTestUser'
+    password_6_chars = 'abc123'
+    password_21_chars = 'abcdefghij1234567890a'
+    password_all_eng = 'abcdefghij'
+    password_all_num = '1234567890'
 
     success_story = '正向情境 - 使用者成功註冊'
     account_format_story = '反向情境 - 帳號格式錯誤'

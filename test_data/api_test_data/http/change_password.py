@@ -5,15 +5,11 @@
 
 from dataclasses import dataclass
 
-from faker import Faker
-
 from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
 from utils.config_loader import get_config
-
-fake = Faker('zh_TW')
 
 
 @dataclass
@@ -47,11 +43,12 @@ def generate_change_password_cases() -> list:
     """
     target_user = get_config().user('change_password_user')
     old = target_user.password
-    new = fake.password(length=10, special_chars=False)
-    password_6_chars = fake.password(length=6, special_chars=False)
-    password_21_chars = fake.password(length=21, special_chars=False)
-    password_all_eng = fake.password(length=10, special_chars=False, digits=False)
-    password_all_num = fake.password(length=10, special_chars=False, upper_case=False, lower_case=False)
+    new = 'newPass123'
+    wrong_old = 'wrongOldPw1'
+    password_6_chars = 'abc123'
+    password_21_chars = 'abcdefghij1234567890a'
+    password_all_eng = 'abcdefghij'
+    password_all_num = '1234567890'
 
     password_format_story = '反向情境 - 密碼格式錯誤'
 
@@ -67,7 +64,7 @@ def generate_change_password_cases() -> list:
         change_password.negative(
             id='change_password_failure_old_password_wrong',
             title='變更密碼失敗-舊密碼輸入錯誤',
-            request=ChangePasswordRequest(old_password=new, new_password=new),
+            request=ChangePasswordRequest(old_password=wrong_old, new_password=new),
             expected={'result': HTTP.Auth.Login.PASSWORD_ERROR, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE},
             story='反向情境 - 舊密錯誤',
             description='舊密碼輸入錯誤',

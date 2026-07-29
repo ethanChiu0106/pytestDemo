@@ -4,16 +4,12 @@
 
 from dataclasses import dataclass
 
-from faker import Faker
-
 from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP
 from test_data.common.helpers import generate_accounts
 from utils.config_loader import get_config
-
-fake = Faker('zh_TW')
 
 
 @dataclass
@@ -64,10 +60,10 @@ def generate_login_cases() -> list:
         login.negative(
             id='incorrect_password',
             title='密碼有誤',
-            request=LoginRequest(account=default_user.account, password=fake.password()),
+            request=LoginRequest(account=default_user.account, password='wrongPass123'),
             expected={'result': HTTP.Auth.Login.PASSWORD_ERROR, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE},
             story='反向情境 - 密碼錯誤',
-            description='輸入正確帳號，但隨機產生錯誤密碼',
+            description='輸入正確帳號，但密碼錯誤',
             severity=AllureSeverity.CRITICAL,
         ),
     ]

@@ -6,15 +6,12 @@ from dataclasses import dataclass
 from typing import List
 
 import pytest
-from faker import Faker
 
 from test_data.common.base import TestCaseData
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import UI
 from utils.config_loader import get_config
-
-fake = Faker('zh_TW')
 
 
 @dataclass
@@ -58,7 +55,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
         ui_login.negative(
             id='ui_incorrect_password',
             title='密碼錯誤',
-            request=UILoginRequest(username=default_user.account, password=fake.password()),
+            request=UILoginRequest(username=default_user.account, password='wrongPass123'),
             expected=UI.Login.LOGIN_FAIL,
             story='反向情境 - 密碼錯誤',
             description='輸入正確的帳號及錯誤的密碼，驗證是否顯示錯誤訊息',
@@ -66,7 +63,7 @@ def generate_ui_login_cases() -> List[pytest.param]:
         ui_login.negative(
             id='ui_incorrect_username',
             title='帳號錯誤',
-            request=UILoginRequest(username=fake.user_name(), password='password'),
+            request=UILoginRequest(username='noSuchUser', password='password'),
             expected=UI.Login.LOGIN_FAIL,
             story='反向情境 - 帳號錯誤',
             description='輸入不存在的帳號，驗證是否顯示錯誤訊息',
