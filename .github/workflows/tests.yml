@@ -1,0 +1,78 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # 手動觸發:Actions 分頁按 Run workflow
+  schedule:
+    - cron: '0 18 * * *' # 每日 UTC 18:00 = 台灣 02:00,定時回歸
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      # 與本機一致(CLAUDE.md:uvx ruff@0.13.2),版本鎖定避免本機過、CI 紅
+      - name: Ruff lint
+        run: uvx ruff@0.13.2 check .
+
+      - name: Ruff format check
+        run: uvx ruff@0.13.2 format --check .
+
+  api-tests:
+    needs: lint
+    runs-on: ubuntu-latest
+
+    # 被測後端:直接消費 mockServer CI 發佈的 image(兩條 pipeline 以 registry 解耦)
+    services:
+      mock-server:
+        image: ghcr.io/ethanchiu0106/mockserver:latest
+        env:
+          SECRET_KEY: ${{ secrets.MOCK_SERVER_SECRET_KEY }}
+        ports:
+          - 8000:8000
+        # image 內建 python(venv 在 PATH),用 urllib 打 /docs 當 health check
+        options: >-
+          --health-cmd "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\""
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true # 快取依賴,加速後續執行
+
+      - name: Install dependencies
+        run: uv sync
+
+      # secrets.yml 不進版控,CI 從 GitHub Secrets 還原(qa URL 即 localhost:8000)
+      - name: Restore config/secrets.yml
+        run: printf '%s' "$SECRETS_YML" > config/secrets.yml
+        env:
+          SECRETS_YML: ${{ secrets.SECRETS_YML }}
+
+      # 只跑 API/WS;UI 測試需要真實前端站台,CI 環境沒有,由 marker 篩掉
+      - name: Run API & WS tests
+        run: uv run pytest --env qa -m "http or ws"
+
+      # 測試失敗也要留證據(報告產物),供 debug 與後續發佈
+      - name: Upload allure-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 14
