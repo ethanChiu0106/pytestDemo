@@ -64,15 +64,93 @@ jobs:
         env:
           SECRETS_YML: ${{ secrets.SECRETS_YML }}
 
-      # 只跑 API/WS;UI 測試需要真實前端站台,CI 環境沒有,由 marker 篩掉
+      # 路徑互補分割:UI 目錄以外全跑。每個測試檔必屬一個目錄,分割由檔案系統
+      # 保證,未來新增測試目錄也自動落在這個 job,不可能靜默漏跑
       - name: Run API & WS tests
-        run: uv run pytest --env qa -m "http or ws"
+        run: uv run pytest --env qa --ignore=testcases/ui_test
 
       # 測試失敗也要留證據(報告產物),供 debug 與後續發佈
       - name: Upload allure-results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results
+          name: allure-results-api
           path: allure-results
           retention-days: 14
+
+  # UI 測試打公開的 SauceDemo,不需 service container;被測物是外部站台,
+  # 與 api-tests 拆成獨立 job——外部不穩時互不拖累
+  ui-tests:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      # runner 沒有瀏覽器,裝 chromium + 系統依賴;CI 無螢幕,pytest-playwright 預設 headless
+      - name: Install Playwright browsers
+        run: uv run playwright install chromium --with-deps
+
+      - name: Restore config/secrets.yml
+        run: printf '%s' "$SECRETS_YML" > config/secrets.yml
+        env:
+          SECRETS_YML: ${{ secrets.SECRETS_YML }}
+
+      - name: Run UI tests
+        run: uv run pytest --env qa testcases/ui_test
+
+      - name: Upload allure-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-ui
+          path: allure-results
+          retention-days: 14
+
+  # CD 概念示範:把 Allure 報告發佈到 GitHub Pages(報告即部署產物)
+  publish-report:
+    needs: [api-tests, ui-tests]
+    if: always() # 測試紅燈也要發報告——失敗的報告更需要被看見
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 只有這個 job 需要寫入(推 gh-pages 分支),權限下放到 job 層級
+
+    steps:
+      # 兩個測試 job 的結果合併進同一個資料夾,產出一份 API+WS+UI 的完整報告
+      - name: Download allure-results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-*
+          path: allure-results
+          merge-multiple: true
+
+      # 取回上次報告的 history,Allure 才能畫趨勢圖;第一次跑沒有 gh-pages 分支,容錯放行
+      - name: Load report history
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Build Allure report
+        uses: simple-elf/allure-report-action@v1.12
+        with:
+          allure_results: allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
+          keep_reports: 20 # 保留最近 20 次報告
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
