@@ -157,7 +157,8 @@ jobs:
           ALLURE_VERSION: 2.44.1
 
       # build 編號來自 executor.json。缺這個檔時 Allure 每次都寫 buildOrder: 1,
-      # 趨勢圖會把歷次結果全部疊在同一個 #1 上;用 run_number 才會遞增
+      # 趨勢圖會把歷次結果全部疊在同一個 #1 上;用 run_number 才會遞增。
+      # reportUrl 指向本輪的版本化子目錄——history 連結點回去才有真的舊報告,不會 404
       - name: Write executor.json
         run: |
           mkdir -p allure-results
@@ -165,7 +166,7 @@ jobs:
             --argjson buildOrder "$GITHUB_RUN_NUMBER" \
             --arg buildName "#${GITHUB_RUN_NUMBER} ${GITHUB_WORKFLOW}" \
             --arg buildUrl "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            --arg reportUrl "$PAGES_URL" \
+            --arg reportUrl "${PAGES_URL}/${GITHUB_RUN_NUMBER}" \
             '{name: "GitHub Actions", type: "github", reportName: "pytestDemo Allure Report",
               buildOrder: $buildOrder, buildName: $buildName, buildUrl: $buildUrl, reportUrl: $reportUrl}' \
             > allure-results/executor.json
@@ -176,12 +177,27 @@ jobs:
           if [ -d gh-pages/history ]; then cp -r gh-pages/history allure-results/history; fi
           allure generate allure-results -o allure-report
 
+      # 每輪報告以 run number 目錄保留(history 連結才有舊報告可點),root 仍放最新
+      # 一份讓固定書籤照常可用;整個 site 重組後全量發佈,不靠 keep_files 累積髒狀態
+      - name: Assemble site
+        run: |
+          mkdir site
+          if [ -d gh-pages ]; then
+            find gh-pages -mindepth 1 -maxdepth 1 -type d -regex '.*/[0-9]+' \
+              -exec cp -r {} site/ \;
+          fi
+          rm -rf "site/${GITHUB_RUN_NUMBER}"
+          cp -r allure-report "site/${GITHUB_RUN_NUMBER}"
+          cp -r allure-report/. site/
+          # ponytail: 只留最近 20 輪(與 Allure history 上限一致),更久的直接刪
+          ls -d site/[0-9]*/ | sort -V | head -n -20 | xargs -r rm -rf
+
       - name: Publish to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-report
+          publish_dir: site
 
       # 通知放在發佈之後,訊息裡的報告連結才是通的。統計直接讀 Allure 產出的
       # summary.json,不另外解析 pytest stdout——同一份數字,單一來源
@@ -224,7 +240,7 @@ jobs:
             "通過 ${passed}/${total}(失敗 ${failed}、broken ${broken}、跳過 ${skipped})" \
             "耗時 $((duration / 1000)) 秒" \
             "" \
-            "📊 <a href=\"${PAGES_URL}\">Allure 報告</a> ・ 🔧 <a href=\"${run_url}\">CI Run #${GITHUB_RUN_NUMBER}</a>")"
+            "📊 <a href=\"${PAGES_URL}/${GITHUB_RUN_NUMBER}\">Allure 報告</a> ・ 🔧 <a href=\"${run_url}\">CI Run #${GITHUB_RUN_NUMBER}</a>")"
 
           # 用 jq 組 JSON,訊息含中文與 < > 引號也不會把 payload 弄壞
           jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$text" \
