@@ -215,6 +215,13 @@ jobs:
             exit 0
           fi
 
+          # push gh-pages 只是觸發 Pages 部署,實際上線是非同步的;等本輪的版本化
+          # 路徑回 200 再發通知,連結點開才是新報告。cb 參數避開 CDN 的 404 快取
+          for i in $(seq 1 18); do
+            curl -sfo /dev/null "${PAGES_URL}/${GITHUB_RUN_NUMBER}/index.html?cb=$i" && break
+            sleep 10
+          done
+
           summary=allure-report/widgets/summary.json
           if [ -f "$summary" ]; then
             IFS=$'\t' read -r total passed failed broken skipped duration <<< \
