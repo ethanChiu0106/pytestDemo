@@ -64,10 +64,10 @@ class TestProductPurchase:
         # 步驟 7: 確認結帳資訊
         checkout_page.assert_url(CheckoutPage.STEP_TWO_URL_REGEX, '驗證是否進入結帳總覽頁面')
         with allure.step('驗證結帳總覽頁面的所有資訊'):
-            checkout_page.assert_text(checkout_page._product_quantity, details_expected['quantity'])
-            checkout_page.assert_text(checkout_page._product_name, details_expected['product_name'])
-            checkout_page.assert_text(checkout_page._payment_info_value, details_expected['payment_info'])
-            checkout_page.assert_text(checkout_page._shipping_info_value, details_expected['shipping_info'])
+            checkout_page.assert_text(checkout_page.product_quantity, details_expected['quantity'])
+            checkout_page.assert_text(checkout_page.product_name, details_expected['product_name'])
+            checkout_page.assert_text(checkout_page.payment_info_value, details_expected['payment_info'])
+            checkout_page.assert_text(checkout_page.shipping_info_value, details_expected['shipping_info'])
 
             item_total = checkout_page.get_item_total()
             checkout_page.assert_value(

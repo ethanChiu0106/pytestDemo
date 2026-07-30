@@ -20,10 +20,10 @@ class CheckoutPage(BasePage):
         self.continue_button = self.page.get_by_test_id('continue')
 
         # --- Step Two: Overview ---
-        self._product_quantity = self.page.get_by_test_id('item-quantity')
-        self._product_name = self.page.get_by_test_id('inventory-item-name')
-        self._payment_info_value = self.page.get_by_test_id('payment-info-value')
-        self._shipping_info_value = self.page.get_by_test_id('shipping-info-value')
+        self.product_quantity = self.page.get_by_test_id('item-quantity')
+        self.product_name = self.page.get_by_test_id('inventory-item-name')
+        self.payment_info_value = self.page.get_by_test_id('payment-info-value')
+        self.shipping_info_value = self.page.get_by_test_id('shipping-info-value')
         self._item_total_value = self.page.get_by_test_id('subtotal-label')
         self._tax_value = self.page.get_by_test_id('tax-label')
         self._final_total_value = self.page.get_by_test_id('total-label')
@@ -56,25 +56,14 @@ class CheckoutPage(BasePage):
         """點擊返回首頁按鈕。"""
         self.back_home_button.click()
 
-    def get_payment_info(self) -> str:
-        """獲取付款資訊"""
-        return self._payment_info_value.text_content()
-
-    def get_shipping_info(self) -> str:
-        """獲取運送資訊"""
-        return self._shipping_info_value.text_content()
-
     def get_item_total(self) -> str:
         """獲取商品總額 (Item total)，並移除標籤和貨幣符號"""
-        full_text = self._item_total_value.text_content()
-        return full_text.replace('Item total: $', '').strip()
+        return self._item_total_value.inner_text().replace('Item total: $', '').strip()
 
     def get_tax(self) -> str:
         """獲取稅金 (Tax)，並移除標籤和貨幣符號"""
-        full_text = self._tax_value.text_content()
-        return full_text.replace('Tax: $', '').strip()
+        return self._tax_value.inner_text().replace('Tax: $', '').strip()
 
     def get_final_total(self) -> str:
         """獲取最終總計 (Total)，並移除標籤和貨幣符號"""
-        full_text = self._final_total_value.text_content()
-        return full_text.replace('Total: $', '').strip()
+        return self._final_total_value.inner_text().replace('Total: $', '').strip()

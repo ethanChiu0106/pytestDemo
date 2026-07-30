@@ -22,12 +22,5 @@ class InventoryPage(BasePage):
             add_button = product_container.locator('[data-test^="add-to-cart-"]')
             add_button.click()
 
-    def get_cart_badge_count(self) -> str:
-        """獲取購物車圖示上的數量。如果圖示不可見，則回傳 '0'。"""
-        with allure.step('獲取購物車中的商品數量'):
-            if not self.shopping_cart_badge.is_visible():
-                return '0'
-            return self.shopping_cart_badge.text_content()
-
     def goto_shopping_cart_page(self):
         self.shopping_cart_link.click()
