@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 import allure
 import requests
 
-from utils.result_base import ResultBase
+from utils.response import normalize_response
 
 if TYPE_CHECKING:
     from api.service_names import Service
@@ -49,9 +49,7 @@ class BaseRequest:
         Returns:
             一個包含 API 回應結果的 dict
         """
-        response = self.request(path, 'GET', **kwargs)
-        self.save_response_log(response)
-        return ResultBase(response).get_result()
+        return self._send(path, 'GET', **kwargs)
 
     def post(self, path, data=None, json=None, **kwargs):
         """發送一個 POST 請求
@@ -65,9 +63,7 @@ class BaseRequest:
         Returns:
             一個包含 API 回應結果的 dict
         """
-        response = self.request(path, 'POST', data, json, **kwargs)
-        self.save_response_log(response)
-        return ResultBase(response).get_result()
+        return self._send(path, 'POST', data, json, **kwargs)
 
     def put(self, path, data=None, json=None, **kwargs):
         """發送一個 PUT 請求
@@ -81,27 +77,27 @@ class BaseRequest:
         Returns:
             一個包含 API 回應結果的 dict
         """
-        response = self.request(path, 'PUT', data, json, **kwargs)
-        self.save_response_log(response)
-        return ResultBase(response).get_result()
+        return self._send(path, 'PUT', data, json, **kwargs)
 
-    def delete(self, path, data=None, json=None, **kwargs):
+    def delete(self, path, **kwargs):
         """發送一個 DELETE 請求
 
         Args:
             path: API 的路徑
-            data: 請求的 body 資料，可選
-            json: 請求的 body JSON 資料，可選
             **kwargs: 其他傳遞給 `requests.request` 的參數
 
         Returns:
             一個包含 API 回應結果的 dict
         """
-        response = self.request(path, 'DELETE', data, json, **kwargs)
-        self.save_response_log(response)
-        return ResultBase(response).get_result()
+        return self._send(path, 'DELETE', **kwargs)
 
-    @allure.step('{path}')
+    def _send(self, path: str, method: str, data=None, json: dict = None, **kwargs) -> dict:
+        """發送請求、寫入回應日誌並回傳正規化結果 (供四個動詞方法共用)"""
+        response = self.request(path, method, data, json, **kwargs)
+        self.save_response_log(response)
+        return normalize_response(response)
+
+    @allure.step('{method} {path}')
     def request(self, path: str, method: str, data=None, json: dict = None, **kwargs):
         """發送一個 HTTP 請求的核心方法
 

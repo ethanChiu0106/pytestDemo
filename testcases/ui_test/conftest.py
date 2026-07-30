@@ -2,8 +2,10 @@ import logging
 
 import allure
 import pytest
-from playwright.sync_api import Playwright
+from playwright.sync_api import Browser, Playwright
 
+from pages.inventory_page import InventoryPage
+from pages.login_page import LoginPage
 from utils.config_loader import get_config
 
 logger = logging.getLogger(__name__)
@@ -43,3 +45,29 @@ def setup_ui_test_id(playwright: Playwright):
     test_id = 'data-test'
     with allure.step(f'設定 test-id 屬性為 {test_id}'):
         playwright.selectors.set_test_id_attribute(test_id)
+
+
+@pytest.fixture(scope='session')
+def standard_user_state(browser: Browser, base_url: str, tmp_path_factory: pytest.TempPathFactory) -> str:
+    """登入一次並回傳 storage_state 檔案路徑
+
+    Args:
+        browser: Playwright 的 Browser 物件。
+        base_url: UI 測試的 base URL。
+        tmp_path_factory: pytest 的暫存目錄工廠，用於存放 storage_state 檔。
+
+    Returns:
+        storage_state JSON 檔的絕對路徑字串。
+    """
+    state_path = tmp_path_factory.mktemp('pw_state') / 'standard_user.json'
+    context = browser.new_context(base_url=base_url)
+    login_page = LoginPage(context.new_page())
+    login_page.goto()
+    default_user = get_config().user('ui_default_user')
+    login_page.fill_username(default_user.account)
+    login_page.fill_password(default_user.password)
+    login_page.click_login_button()
+    login_page.assert_url(InventoryPage.URL_REGEX)
+    context.storage_state(path=str(state_path))
+    context.close()
+    return str(state_path)

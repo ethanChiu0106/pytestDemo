@@ -7,7 +7,7 @@ import msgpack
 import websockets
 
 from api.ws_constants import OpCode
-from utils.result_base import ResultBase
+from utils.response import normalize_response
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +172,7 @@ class AsyncBaseWS:
                     response_data = await self.message_queue.get()
                     if response_data.get('op_code') == expected_op_code:
                         logger.info('Receive (Expected) => %s', response_data)
-                        result = ResultBase(response_data).get_result()
+                        result = normalize_response(response_data)
                         return result
                     else:
                         logger.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, response_data)
@@ -192,7 +192,7 @@ class AsyncBaseWS:
         if self._websocket:
             data = await self.message_queue.get()
             logger.info('Receive => %s', data)
-            result = ResultBase(data).get_result()
+            result = normalize_response(data)
             return result
         else:
             logger.error('WebSocket 尚未連線或已關閉，無法接收訊息')
