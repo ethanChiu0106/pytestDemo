@@ -103,18 +103,52 @@ get_item.negative(id='get_item_not_found', title='獲取不存在的物品', req
 
 `positive()` / `negative()` 會自動掛上對應的 mark 並推導 `story`（`'{正/反}向情境 - {story_base}'`）。需要更細的分組時（例如「邊界值情境」，或同一檔的反向要拆成帳號錯誤／密碼錯誤）再顯式傳 `story`。`description` 與 `severity` 皆選填。
 
-每檔的 `XxxCase` 是**型別別名**（`XxxCase = TestCaseData[XxxRequest]`），不是新類別——分類欄位都在 builder 上，別名只負責綁定請求型別讓測試簽名好讀。不需要請求參數的 API（如取得列表）連 `XxxRequest` 都不用建，別名寫成 `XxxCase = TestCaseData`、案例傳 `request=None` 即可。
+每檔的 `XxxCase` 是**型別別名**（`XxxCase = TestCaseData[XxxRequest]`），不是新類別——分類欄位都在 builder 上，別名只負責綁定型別讓測試簽名好讀。不需要請求參數的 API（如取得列表）連 `XxxRequest` 都不用建，別名寫成 `XxxCase = TestCaseData`、案例傳 `request=None` 即可。
+
+`TestCaseData` 有**兩個**型別參數：`TestCaseData[請求型別, 預期型別]`。第二個的預設值是 `Expectation`（API 單步驟的形狀），所以 API 單步驟的別名只寫一個參數即可。其他形狀要顯式指定，見下方〈`expected` 的形狀〉。
 
 **只手填 Allure 的 Behaviors 階層（`epic` / `feature` / `story`）。** Suites（`parentSuite` / `suite` / `subSuite`）由 allure-pytest 依模組與類別名自動推導，已驗證三層都會填滿，**不要再加回 `parent_suite` / `suite` / `sub_suite` 欄位**——兩套階層描述同一批測試，手動維護兩份只會不同步。
 
-情境測試（`scenario/`）只有單一案例，不套 builder：builder 的價值是把每檔常數攤提到多個案例上，一個案例攤不到，且情境測試的 marks 只有層級標籤、沒有正/反向之分。
+**唯一不套 builder 的是 API 情境測試**（`test_data/api_test_data/scenario/user_profile_scenario.py`），它直接呼叫 `case_builder.py` 的 `create_param_from_case()`；理由寫在該檔註解裡——只有單一案例，攤提常數的價值不成立，且它的 marks 只有層級標籤、沒有正/反向之分。它的 `UserProfileScenarioCase` 因此是繼承 `TestCaseData` 的 dataclass（`epic` / `feature` 為欄位預設值），而非上面說的型別別名。
+
+**判準是「案例數」，不是「在不在 `scenario/` 目錄」。** UI 情境測試（`test_data/ui_test_data/scenario/purchase.py`）同樣只有一個案例，但它**有**套 builder，寫法是 `ui_purchase.positive(...)`、`marks=[PytestMark.SCENARIO]`。兩支的差異純粹是先後寫成、未統一，不是刻意的設計區分——動到任一支時照該檔現有寫法走，不要拿另一支當範本。
 
 ---
 
-`expected` 的形狀依消費者而不同，**不要試圖統一**：
+`expected` 的形狀依消費者而不同，**不要試圖統一**。四種形狀各有型別，由 `TestCaseData` 的第二個型別參數綁定，全部定義在 `test_data/common/base.py`：
 
-- **API 單步驟**：`{'result': ..., 'schema': ...}`（型別 `Expectation`，`schema` 選填）
-- **API 情境**：`{步驟名: Expectation}`
-- **UI**：自有結構，且**不經過 `verify_case_auto`**（UI 是流程中多點斷言，沒有單一回應可比對）
+| 場景 | 型別 | 別名寫法 |
+|---|---|---|
+| API 單步驟 | `Expectation`（`result` 必填、`schema` 選填） | `TestCaseData[XxxRequest]`（預設值，免寫） |
+| API 情境 | `dict[str, Expectation]`，以步驟名為鍵 | `TestCaseData[XxxRequest, dict[str, Expectation]]` |
+| UI 登入類 | `UILoginExpectation` | `TestCaseData[XxxRequest, UILoginExpectation]` |
+| UI 流程類 | `UIPurchaseExpectation` | `TestCaseData[XxxRequest, UIPurchaseExpectation]` |
+
+UI **不經過 `verify_case_auto`**（UI 是流程中多點斷言，沒有單一回應可比對）。把 UI 形狀的 `expected` 傳進 API 的 builder 或 `verify_case_auto`，型別檢查會擋下來，不必等到執行期。
+
+型別參數的預設值用到 PEP 696，Python 3.13 前需要 `typing-extensions`，已列入依賴。
 
 `ResultBase` 把 HTTP 的 `status_code` 與 body 壓平在同一層，所以 `expected` 裡的 `code` 與 `status_code` 其實來自不同層級。這點已評估過，結論是**維持現狀**——壓平雖然概念上不乾淨，但用起來方便，拆開屬於行為變更，風險大於可讀性收益。
+
+---
+
+## 預期結果與頁面常數放哪裡
+
+`test_data/common/expectations.py` 存的是 `Expectation` 的**零件**，不是完整的 `Expectation`：
+
+```python
+expected={'result': HTTP.Common.SUCCESS, 'schema': HTTP.Auth.Schemas.LOGIN_SUCCESS}
+#                   └─ 填進 result 的值      └─ 填進 schema 的結構
+```
+
+`Schemas` 底下一律是 schema，其餘是 result 的值。schema 用 `_http_schema(data)` / `_ws_schema(data)` 建立，回應外框固定、只有 `data` 依 API 而不同。
+
+放哪裡依「這是什麼東西」決定，不看引用次數：
+
+| 種類 | 位置 |
+|---|---|
+| 錯誤碼、回應 schema | `expectations.py`，即使只用一次。這是被測系統的契約 |
+| 頁面網址 regex、選擇器 | 各 Page Object 的類別屬性，例如 `CheckoutPage.STEP_ONE_URL_REGEX` |
+| 只有單一資料檔用得到的預期值 | 該資料檔內，例如 `purchase.py` 的 `details` |
+
+**不要在 `expectations.py` 放 URL regex。** 那是頁面位置，消費者是測試檔，放這裡會逼測試為了一個網址去 import `test_data`。
