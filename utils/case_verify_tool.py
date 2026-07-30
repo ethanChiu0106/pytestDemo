@@ -27,26 +27,17 @@ def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]
     """
     # 結構驗證：確保所有預期的鍵都存在於實際結果中
     expected_keys = set(expected_result.keys())
-    actual_keys = set(actual_result.keys())
+    missing_keys = expected_keys - set(actual_result.keys())
 
-    if not expected_keys.issubset(actual_keys):
-        missing_keys = expected_keys - actual_keys
+    if missing_keys:
         error_msg = f'驗證失敗：實際結果中缺少預期的鍵 (Missing keys in actual result): {missing_keys}'
         logger.error(error_msg)
         assert False, error_msg
 
-    # 內容驗證：只比對共同存在的鍵
-    common_keys = expected_keys
-    filtered_actual = {key: actual_result[key] for key in common_keys}
-    filtered_expected = {key: expected_result[key] for key in common_keys}
+    # 內容驗證：只取預期的鍵比對，讓斷言失敗時的 diff 不被無關欄位淹沒
+    filtered_actual = {key: actual_result[key] for key in expected_keys}
 
-    if filtered_actual != filtered_expected:
-        logger.error(
-            f'比對失敗！\n實際結果 (僅比對共同欄位): {filtered_actual}\n預期結果 (僅比對共同欄位): {filtered_expected}'
-        )
-
-    # 再次斷言，以便觸發 Pytest 的詳細 diff 報告
-    assert filtered_actual == filtered_expected
+    assert filtered_actual == expected_result
 
 
 def _verify_value(schema: Any, path: str, value: Any):
