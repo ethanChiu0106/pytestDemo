@@ -123,6 +123,13 @@ jobs:
       contents: write # 只有這個 job 需要寫入(推 gh-pages 分支),權限下放到 job 層級
 
     steps:
+      # Pages 網址算一次給後面的 executor.json 與 Telegram 通知共用;
+      # github.io 的 host 只吃小寫,owner 大小寫不能直接拼
+      - name: Resolve Pages URL
+        run: |
+          OWNER_LC="$(echo "${GITHUB_REPOSITORY%%/*}" | tr '[:upper:]' '[:lower:]')"
+          echo "PAGES_URL=https://${OWNER_LC}.github.io/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
+
       # 兩個測試 job 的結果合併進同一個資料夾,產出一份 API+WS+UI 的完整報告
       - name: Download allure-results
         uses: actions/download-artifact@v4
@@ -149,6 +156,20 @@ jobs:
         env:
           ALLURE_VERSION: 2.44.1
 
+      # build 編號來自 executor.json。缺這個檔時 Allure 每次都寫 buildOrder: 1,
+      # 趨勢圖會把歷次結果全部疊在同一個 #1 上;用 run_number 才會遞增
+      - name: Write executor.json
+        run: |
+          mkdir -p allure-results
+          jq -n \
+            --argjson buildOrder "$GITHUB_RUN_NUMBER" \
+            --arg buildName "#${GITHUB_RUN_NUMBER} ${GITHUB_WORKFLOW}" \
+            --arg buildUrl "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --arg reportUrl "$PAGES_URL" \
+            '{name: "GitHub Actions", type: "github", reportName: "pytestDemo Allure Report",
+              buildOrder: $buildOrder, buildName: $buildName, buildUrl: $buildUrl, reportUrl: $reportUrl}' \
+            > allure-results/executor.json
+
       # history 塞回 results,Allure 才會畫趨勢圖(runner 內建 Java,免安裝)
       - name: Generate report with history
         run: |
@@ -161,3 +182,53 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-report
+
+      # 通知放在發佈之後,訊息裡的報告連結才是通的。統計直接讀 Allure 產出的
+      # summary.json,不另外解析 pytest stdout——同一份數字,單一來源
+      - name: Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          API_RESULT: ${{ needs.api-tests.result }}
+          UI_RESULT: ${{ needs.ui-tests.result }}
+        run: |
+          # 沒設 secret 就跳過:讓沒有 bot 的 fork 不會因為通知而紅燈
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::notice::TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 未設定,跳過通知"
+            exit 0
+          fi
+
+          summary=allure-report/widgets/summary.json
+          if [ -f "$summary" ]; then
+            IFS=$'\t' read -r total passed failed broken skipped duration <<< \
+              "$(jq -r '[.statistic.total, .statistic.passed, .statistic.failed,
+                         .statistic.broken, .statistic.skipped, (.time.duration // 0)] | @tsv' "$summary")"
+          else
+            # 報告產不出來(測試 job 被取消、artifact 缺件)也要發訊息,否則最該通知的情況反而靜默
+            total=0 passed=0 failed=0 broken=0 skipped=0 duration=0
+          fi
+
+          if [ "$API_RESULT" = success ] && [ "$UI_RESULT" = success ]; then
+            headline='✅ 測試全數通過'
+          else
+            headline='❌ 測試失敗'
+          fi
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          text="$(printf '%s\n' \
+            "<b>${GITHUB_REPOSITORY}</b> ・ ${headline}" \
+            "" \
+            "分支 <code>${GITHUB_REF_NAME}</code> ・ commit <code>${GITHUB_SHA:0:7}</code>" \
+            "API: ${API_RESULT} ・ UI: ${UI_RESULT}" \
+            "通過 ${passed}/${total}(失敗 ${failed}、broken ${broken}、跳過 ${skipped})" \
+            "耗時 $((duration / 1000)) 秒" \
+            "" \
+            "📊 <a href=\"${PAGES_URL}\">Allure 報告</a> ・ 🔧 <a href=\"${run_url}\">CI Run #${GITHUB_RUN_NUMBER}</a>")"
+
+          # 用 jq 組 JSON,訊息含中文與 < > 引號也不會把 payload 弄壞
+          jq -n --arg chat_id "$TELEGRAM_CHAT_ID" --arg text "$text" \
+            '{chat_id: $chat_id, text: $text, parse_mode: "HTML", disable_web_page_preview: true}' \
+          | curl -sS -f --retry 2 -X POST \
+              "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -H 'Content-Type: application/json' -d @- > /dev/null
