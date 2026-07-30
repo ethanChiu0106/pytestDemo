@@ -16,8 +16,8 @@ class CartPage(BasePage):
 
     def get_item_by_name(self, product_name: str) -> Locator:
         """根據商品名稱，獲取購物車中對應的項目定位器。"""
-        allure.step("從購物車中尋找商品 '{product_name}'")
-        return self.cart_item.filter(has_text=product_name)
+        with allure.step(f"從購物車中尋找商品 '{product_name}'"):
+            return self.cart_item.filter(has_text=product_name)
 
     @allure.step('點擊「Checkout」按鈕')
     def click_checkout(self):

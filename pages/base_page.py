@@ -34,7 +34,8 @@ class BasePage:
 
     def assert_text(self, locator: Locator, expected_text: str, message: str = None):
         """驗證指定 Locator 的文字內容是否符合預期。"""
-        step_message = message if message else f"驗證: '{locator}' 文字應為 '{expected_text}'"
+        # 預設訊息不帶 locator，它字串化後是整個 frame 與 selector 的內部表示
+        step_message = message if message else f"驗證文字應為 '{expected_text}'"
         with allure.step(step_message):
             expect(locator).to_have_text(expected_text)
 
@@ -46,13 +47,13 @@ class BasePage:
 
     def assert_element_is_visible(self, locator: Locator, message: str = None):
         """驗證指定的元素是否可見。"""
-        step_message = message if message else f"驗證元素 '{locator}' 可見"
+        step_message = message if message else '驗證元素可見'
         with allure.step(step_message):
             expect(locator).to_be_visible()
 
     def assert_element_is_not_visible(self, locator: Locator, message: str = None):
         """驗證指定的元素是否不可見。"""
-        step_message = message if message else f"驗證元素 '{locator}' 不可見"
+        step_message = message if message else '驗證元素不可見'
         with allure.step(step_message):
             expect(locator).not_to_be_visible()
 
