@@ -4,8 +4,8 @@ import allure
 import pytest
 from playwright.sync_api import Page
 
+from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
-from test_data.common.expectations import UI
 from test_data.ui_test_data.single.login import UILoginCase, generate_ui_login_cases
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ class TestLoginPage:
 
         if case.expected['success']:
             with allure.step('驗證登入成功'):
-                login_page.assert_url(UI.INVENTORY_URL_REGEX)
+                login_page.assert_url(InventoryPage.URL_REGEX)
                 login_page.assert_element_is_not_visible(login_page.error_msg)
         else:
             with allure.step(f'驗證錯誤訊息: {case.expected["error_message"]}'):

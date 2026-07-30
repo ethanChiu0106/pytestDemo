@@ -7,6 +7,10 @@ from pages.base_page import BasePage
 class CheckoutPage(BasePage):
     """結帳流程相關頁面的 Page Object。"""
 
+    STEP_ONE_URL_REGEX = '.*checkout-step-one.html'
+    STEP_TWO_URL_REGEX = '.*checkout-step-two.html'
+    COMPLETE_URL_REGEX = '.*checkout-complete.html'
+
     def __init__(self, page: Page):
         super().__init__(page)
         # --- Step One: Your Information ---

@@ -7,6 +7,8 @@ from pages.base_page import BasePage
 class CartPage(BasePage):
     """購物車頁面的 Page Object。"""
 
+    URL_REGEX = '.*cart.html'
+
     def __init__(self, page: Page):
         super().__init__(page)
         self.cart_item = self.page.get_by_test_id('inventory-item')

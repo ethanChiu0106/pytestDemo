@@ -7,6 +7,8 @@ from pages.base_page import BasePage
 class InventoryPage(BasePage):
     """商品列表頁面的 Page Object。"""
 
+    URL_REGEX = '.*inventory.html'
+
     def __init__(self, page: Page):
         super().__init__(page)
         self._item_container = self.page.get_by_test_id('inventory-item')
