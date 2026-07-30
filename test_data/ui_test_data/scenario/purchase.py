@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from test_data.common.base import TestCaseData
+from test_data.common.base import TestCaseData, UIPurchaseExpectation
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from utils.config_loader import get_config
@@ -21,7 +21,7 @@ class UIPurchaseRequest:
     product_name: str
 
 
-UIPurchaseCase = TestCaseData[UIPurchaseRequest]
+UIPurchaseCase = TestCaseData[UIPurchaseRequest, UIPurchaseExpectation]
 
 
 ui_purchase = CaseBuilder(
@@ -56,6 +56,7 @@ def generate_ui_purchase_cases() -> List[pytest.param]:
             ),
             expected={
                 'details': {
+                    'quantity': '1',
                     'product_name': 'Sauce Labs Bike Light',
                     'payment_info': 'SauceCard #31337',
                     'shipping_info': 'Free Pony Express Delivery!',

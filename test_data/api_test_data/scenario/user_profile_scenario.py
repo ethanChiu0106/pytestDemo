@@ -6,10 +6,11 @@ from dataclasses import dataclass
 
 from faker import Faker
 
-from test_data.common.base import TestCaseData
+from test_data.common.base import Expectation, TestCaseData
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import HTTP, WebSocket
-from test_data.common.helpers import create_param_from_case, generate_accounts
+from test_data.common.case_builder import create_param_from_case
+from test_data.common.helpers import generate_accounts
 
 fake = Faker('zh_TW')
 
@@ -30,8 +31,11 @@ class UserProfileScenarioRequest:
 
 
 @dataclass
-class UserProfileScenarioCase(TestCaseData[UserProfileScenarioRequest]):
-    """使用者個人資料場景的測試案例"""
+class UserProfileScenarioCase(TestCaseData[UserProfileScenarioRequest, dict[str, Expectation]]):
+    """使用者個人資料場景的測試案例
+
+    情境測試的 `expected` 以步驟名為鍵，每個值是該步驟的 `Expectation`。
+    """
 
     epic: str = '使用者個人資料完整流程'
     feature: str = '從註冊到變更資料'

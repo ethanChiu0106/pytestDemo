@@ -28,7 +28,7 @@ get_item = CaseBuilder(
     marks=[PytestMark.SINGLE],
 )
 
-NOT_FOUND_EXPECTED = {'result': HTTP.Item.GetItem.NOT_FOUND, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE}
+NOT_FOUND_EXPECTED = {'result': HTTP.Item.GetItem.NOT_FOUND, 'schema': HTTP.Common.Schemas.FAIL}
 
 
 def generate_get_item_cases() -> list:

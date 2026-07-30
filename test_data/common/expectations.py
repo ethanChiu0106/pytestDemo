@@ -1,21 +1,36 @@
+"""存放測試預期結果的可重用零件。
+
+此處的常數多半是 `Expectation` 的其中一格，而非完整的 `Expectation`：
+
+    expected={'result': HTTP.Common.SUCCESS, 'schema': HTTP.Auth.Schemas.LOGIN_SUCCESS}
+
+`Schemas` 底下是填進 `schema` 的結構，其餘是填進 `result` 的值。
+UI 的常數是例外，UI 不經過 `verify_case_auto`，存的是完整的預期結果。
+
+各形狀的型別定義在 `base.py`。頁面網址不在此處，屬於各 Page Object 的屬性。
 """
-存放測試相關的預期結果。
-"""
+
+from .base import UILoginExpectation
+
+# 物品的欄位結構，HTTP 與 WebSocket 兩種協定回傳的形狀相同
+_ITEM_FIELDS = {'name': str, 'description': str, 'id': int}
 
 
-def _http_expectation(code: int, status_code: int) -> dict:
-    """建立 HTTP 預期結果"""
-    return {'code': code, 'status_code': status_code}
+def _http_schema(data_schema) -> dict:
+    """建立 HTTP 回應的 schema，外層固定，只有 data 依 API 而不同"""
+    return {'status_code': int, 'code': int, 'data': data_schema}
 
 
-def _ws_error_expectation(error_code: int) -> dict:
-    """建立 WebSocket 錯誤預期結果"""
-    return {'error_code': error_code, 'success': False}
-
-
-def _ui_expectation(success: bool, error_message: str | None) -> dict:
-    """建立 UI 預期結果"""
-    return {'success': success, 'error_message': error_message}
+def _ws_schema(data_schema) -> dict:
+    """建立 WebSocket 回應的 schema，外層固定，只有 data 依 API 而不同"""
+    return {
+        'success': bool,
+        'op_code': int,
+        'data': data_schema,
+        'error_code': int,
+        'error_msg': str,
+        'sub_code': int,
+    }
 
 
 class HTTP:
@@ -24,13 +39,13 @@ class HTTP:
     class Common:
         """通用預期結果"""
 
-        SUCCESS = _http_expectation(0, 200)
-        FAIL_HTTP_STRUCTURE = {'code': int, 'status_code': int, 'msg': str}
+        SUCCESS = {'code': 0, 'status_code': 200}
 
         class Schemas:
             """通用的 Schema 結構"""
 
-            SUCCESS_WITH_NULL_DATA = {'status_code': int, 'code': int, 'data': None}
+            SUCCESS_WITH_NULL_DATA = _http_schema(None)
+            FAIL = {'code': int, 'status_code': int, 'msg': str}
 
     class Auth:
         """使用者驗證相關功能的預期結果"""
@@ -38,31 +53,32 @@ class HTTP:
         class Schemas:
             """Auth 相關的 Schema 結構"""
 
-            LOGIN_SUCCESS = {
-                'code': int,
-                'data': {
+            LOGIN_SUCCESS = _http_schema(
+                {
                     'access_token': str,
                     'ws_url': str,
                     'player_info': {'username': str, 'telephone': (type(None), str)},
-                },
-            }
-            REGISTER_SUCCESS = {
-                'status_code': int,
-                'code': int,
-                'data': {'account': str, 'username': str, 'telephone': None, 'id': int},
-            }
+                }
+            )
+            REGISTER_SUCCESS = _http_schema({'account': str, 'username': str, 'telephone': None, 'id': int})
 
         class Validation:
-            ACCOUNT_FORMAT_ERROR = _http_expectation(2001, 400)
-            PASSWORD_FORMAT_ERROR = _http_expectation(2003, 400)
+            """欄位格式驗證的預期結果"""
+
+            ACCOUNT_FORMAT_ERROR = {'code': 2001, 'status_code': 400}
+            PASSWORD_FORMAT_ERROR = {'code': 2003, 'status_code': 400}
 
         class Register:
-            SUCCESS = _http_expectation(0, 201)
-            REPEATED_ACCOUNT = _http_expectation(2000, 400)
+            """註冊功能的預期結果"""
+
+            SUCCESS = {'code': 0, 'status_code': 201}
+            REPEATED_ACCOUNT = {'code': 2000, 'status_code': 400}
 
         class Login:
-            ACCOUNT_ERROR = _http_expectation(2002, 400)
-            PASSWORD_ERROR = _http_expectation(2004, 400)
+            """登入功能的預期結果"""
+
+            ACCOUNT_ERROR = {'code': 2002, 'status_code': 400}
+            PASSWORD_ERROR = {'code': 2004, 'status_code': 400}
 
     class Item:
         """物品相關功能的預期結果 (REST)"""
@@ -70,11 +86,13 @@ class HTTP:
         class Schemas:
             """Item 相關的 Schema 結構"""
 
-            GET_SINGLE_ITEM = {'status_code': int, 'code': int, 'data': {'name': str, 'description': str, 'id': int}}
-            GET_ITEM_LIST = {'status_code': int, 'code': int, 'data': [{'name': str, 'description': str, 'id': int}]}
+            GET_SINGLE_ITEM = _http_schema(_ITEM_FIELDS)
+            GET_ITEM_LIST = _http_schema([_ITEM_FIELDS])
 
         class GetItem:
-            NOT_FOUND = _http_expectation(3010, 404)
+            """獲取單一物品的預期結果"""
+
+            NOT_FOUND = {'code': 3010, 'status_code': 404}
 
 
 class WebSocket:
@@ -83,38 +101,10 @@ class WebSocket:
     class Schemas:
         """WebSocket 相關的 Schema 結構"""
 
-        PLAYER_INFO = {
-            'success': bool,
-            'op_code': int,
-            'data': {'username': str, 'telephone': (type(None), str)},
-            'error_code': int,
-            'error_msg': str,
-            'sub_code': int,
-        }
-        SINGLE_ITEM = {
-            'success': bool,
-            'op_code': int,
-            'data': {'name': str, 'description': str, 'id': int},
-            'error_code': int,
-            'error_msg': str,
-            'sub_code': int,
-        }
-        ITEM_LIST = {
-            'success': bool,
-            'op_code': int,
-            'data': [{'name': str, 'description': str, 'id': int}],
-            'error_code': int,
-            'error_msg': str,
-            'sub_code': int,
-        }
-        FAIL = {
-            'success': bool,
-            'op_code': int,
-            'data': None,
-            'error_code': int,
-            'error_msg': str,
-            'sub_code': int,
-        }
+        PLAYER_INFO = _ws_schema({'username': str, 'telephone': (type(None), str)})
+        SINGLE_ITEM = _ws_schema(_ITEM_FIELDS)
+        ITEM_LIST = _ws_schema([_ITEM_FIELDS])
+        FAIL = _ws_schema(None)
 
     class Common:
         """通用的 WebSocket 預期結果"""
@@ -122,37 +112,36 @@ class WebSocket:
         SUCCESS = {'success': True, 'error_code': 0, 'error_msg': ''}
 
     class User:
-        TELEPHONE_NOT_PROVIDED = _ws_error_expectation(3006)
-        INVALID_TELEPHONE_FORMAT = _ws_error_expectation(3007)
-        TELEPHONE_ALREADY_REGISTERED = _ws_error_expectation(3008)
-        INVALID_USERNAME_FORMAT = _ws_error_expectation(3013)
+        """使用者相關功能的預期結果"""
+
+        TELEPHONE_NOT_PROVIDED = {'error_code': 3006, 'success': False}
+        INVALID_TELEPHONE_FORMAT = {'error_code': 3007, 'success': False}
+        TELEPHONE_ALREADY_REGISTERED = {'error_code': 3008, 'success': False}
+        INVALID_USERNAME_FORMAT = {'error_code': 3013, 'success': False}
 
     class Item:
-        ITEM_ID_NOT_PROVIDED = _ws_error_expectation(3009)
-        ITEM_NOT_FOUND = _ws_error_expectation(3010)
+        """物品相關功能的預期結果"""
+
+        ITEM_ID_NOT_PROVIDED = {'error_code': 3009, 'success': False}
+        ITEM_NOT_FOUND = {'error_code': 3010, 'success': False}
 
 
 class UI:
     """包含所有 UI 相關的預期結果"""
 
-    INVENTORY_URL_REGEX = '.*inventory.html'
-
     class Login:
         """登入頁面相關的預期結果"""
 
-        SUCCESS = _ui_expectation(True, None)
-        LOGIN_FAIL = _ui_expectation(False, 'Epic sadface: Username and password do not match any user in this service')
-        EMPTY_USERNAME = _ui_expectation(False, 'Epic sadface: Username is required')
-        EMPTY_PASSWORD = _ui_expectation(False, 'Epic sadface: Password is required')
-
-    class Purchase:
-        """購買流程相關的預期結果和常量"""
-
-        # Product
-        PURCHASE_QUANTITY = '1'
-
-        # URL Reg
-        CART_URL_REGEX = '.*cart.html'
-        CHECKOUT_STEP_ONE_URL_REGEX = '.*checkout-step-one.html'
-        CHECKOUT_STEP_TWO_URL_REGEX = '.*checkout-step-two.html'
-        CHECKOUT_COMPLETE_URL_REGEX = '.*checkout-complete.html'
+        SUCCESS: UILoginExpectation = {'success': True, 'error_message': None}
+        LOGIN_FAIL: UILoginExpectation = {
+            'success': False,
+            'error_message': 'Epic sadface: Username and password do not match any user in this service',
+        }
+        EMPTY_USERNAME: UILoginExpectation = {
+            'success': False,
+            'error_message': 'Epic sadface: Username is required',
+        }
+        EMPTY_PASSWORD: UILoginExpectation = {
+            'success': False,
+            'error_message': 'Epic sadface: Password is required',
+        }

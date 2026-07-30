@@ -7,7 +7,7 @@ from typing import List
 
 import pytest
 
-from test_data.common.base import TestCaseData
+from test_data.common.base import TestCaseData, UILoginExpectation
 from test_data.common.case_builder import CaseBuilder
 from test_data.common.enums import AllureSeverity, PytestMark
 from test_data.common.expectations import UI
@@ -22,7 +22,7 @@ class UILoginRequest:
     password: str
 
 
-UILoginCase = TestCaseData[UILoginRequest]
+UILoginCase = TestCaseData[UILoginRequest, UILoginExpectation]
 
 
 ui_login = CaseBuilder(

@@ -17,6 +17,8 @@ dependencies = [
     "pyhumps",
     "pre-commit>=4.3.0",
     "pytest-playwright>=0.7.1",
+    # TypeVar 的 default 參數 (PEP 696) 在 Python 3.13 前需要此套件
+    "typing-extensions>=4.4",
 ]
 
 [tool.ruff]

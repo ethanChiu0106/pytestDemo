@@ -33,7 +33,7 @@ change_password = CaseBuilder(
 
 PASSWORD_FORMAT_EXPECTED = {
     'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
+    'schema': HTTP.Common.Schemas.FAIL,
 }
 
 
@@ -65,7 +65,7 @@ def generate_change_password_cases() -> list:
             id='change_password_failure_old_password_wrong',
             title='變更密碼失敗-舊密碼輸入錯誤',
             request=ChangePasswordRequest(old_password=wrong_old, new_password=new),
-            expected={'result': HTTP.Auth.Login.PASSWORD_ERROR, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE},
+            expected={'result': HTTP.Auth.Login.PASSWORD_ERROR, 'schema': HTTP.Common.Schemas.FAIL},
             story='反向情境 - 舊密錯誤',
             description='舊密碼輸入錯誤',
         ),

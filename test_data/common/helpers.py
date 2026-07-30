@@ -5,25 +5,9 @@
 import random
 from enum import Enum
 
-import allure
-import pytest
 from faker import Faker
 
-from .base import TestCaseData
-from .enums import PytestMark
-
 fake = Faker('zh_TW')
-
-PYTEST_MARKS_MAP = {member: getattr(pytest.mark, member.value) for member in PytestMark}
-
-# 只掛 Behaviors 階層。Suites (parentSuite / suite) 由 allure-pytest 依模組路徑
-# 自動推導，刻意不列在此——加回來等於同一批測試維護兩套階層。
-ALLURE_TAGS_MAP = {
-    'epic': allure.epic,
-    'feature': allure.feature,
-    'story': allure.story,
-    'severity': lambda severity: allure.severity(severity.value),
-}
 
 
 def generate_accounts(num, min_len=5, max_len=20):
@@ -38,35 +22,6 @@ def generate_accounts(num, min_len=5, max_len=20):
         )
         accounts.append(account)
     return accounts
-
-
-def create_param_from_case(case: TestCaseData, id: str = None) -> pytest.param:
-    """
-    將一個測試案例的 dataclass 物件轉換為 pytest.param 物件，
-    並使用型別安全的 Enum 動態地附加 pytest 和 allure 的標籤。
-
-    註：`title` 與 `description` 不在此處理——`allure.title` 不是 MarkDecorator，
-    無法作為 pytest.param 的 mark。兩者改由根 conftest.py 的 `pytest_runtest_call`
-    hook 在 call 階段套用。
-    """
-    all_marks = []
-
-    # --- 處理 Pytest 標籤 ---
-    if case.marks:
-        for mark_enum in case.marks:
-            mark_obj = PYTEST_MARKS_MAP.get(mark_enum)
-            if mark_obj:
-                all_marks.append(mark_obj)
-
-    # --- 處理 Allure 標籤 ---
-    for key, allure_marker_func in ALLURE_TAGS_MAP.items():
-        value = getattr(case, key, None)
-        if value:
-            all_marks.append(allure_marker_func(value))
-
-    case_id = id or getattr(case, 'title', 'N/A')
-
-    return pytest.param(case, marks=all_marks, id=case_id)
 
 
 def create_ws_expectation(base_expectation: dict, op_code_enum: Enum, sub_code_enum: Enum) -> dict:

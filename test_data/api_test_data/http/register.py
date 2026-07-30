@@ -35,14 +35,14 @@ register = CaseBuilder(
 )
 
 SUCCESS_EXPECTED = {'result': HTTP.Auth.Register.SUCCESS, 'schema': HTTP.Auth.Schemas.REGISTER_SUCCESS}
-REPEATED_ACCOUNT_EXPECTED = {'result': HTTP.Auth.Register.REPEATED_ACCOUNT, 'schema': HTTP.Common.FAIL_HTTP_STRUCTURE}
+REPEATED_ACCOUNT_EXPECTED = {'result': HTTP.Auth.Register.REPEATED_ACCOUNT, 'schema': HTTP.Common.Schemas.FAIL}
 ACCOUNT_FORMAT_EXPECTED = {
     'result': HTTP.Auth.Validation.ACCOUNT_FORMAT_ERROR,
-    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
+    'schema': HTTP.Common.Schemas.FAIL,
 }
 PASSWORD_FORMAT_EXPECTED = {
     'result': HTTP.Auth.Validation.PASSWORD_FORMAT_ERROR,
-    'schema': HTTP.Common.FAIL_HTTP_STRUCTURE,
+    'schema': HTTP.Common.Schemas.FAIL,
 }
 
 
