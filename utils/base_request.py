@@ -1,6 +1,7 @@
 """提供一個 HTTP 請求的基礎類別"""
 
 import logging
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, ClassVar
 
 import allure
@@ -12,6 +13,27 @@ if TYPE_CHECKING:
     from api.service_names import Service
 
 logger = logging.getLogger(__name__)
+
+SENSITIVE_KEYS = frozenset({'password', 'token', 'access_token', 'refresh_token', 'authorization', 'cookie'})
+
+
+def mask_sensitive(value):
+    """遮蔽敏感欄位的值，避免密碼與 token 寫進 log 與 Allure 附件
+
+    比對 `Mapping` 而非 `dict`，因為 requests 的 headers 是 `CaseInsensitiveDict`，
+    不是 `dict` 的子類別，只比對 `dict` 會讓 Authorization 整包漏掉。
+
+    Args:
+        value: 任意可能含敏感欄位的資料，dict 與 list 會遞迴處理
+
+    Returns:
+        同結構的資料，敏感欄位的值換成 '***'
+    """
+    if isinstance(value, Mapping):
+        return {k: '***' if k.lower() in SENSITIVE_KEYS else mask_sensitive(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [mask_sensitive(v) for v in value]
+    return value
 
 
 class BaseRequest:
@@ -143,7 +165,7 @@ class BaseRequest:
         for key, value in kwargs.items():
             if value is None:
                 continue
-            logger.info('Request %s => %s', key, value)
+            logger.info('Request %s => %s', key, mask_sensitive(value))
 
     @staticmethod
     def save_response_log(response: requests.Response):
@@ -155,10 +177,10 @@ class BaseRequest:
         if response is None:
             logger.error('No response received')
             return
-        logger.info('Request headers => %s', response.request.headers)
-        logger.info('Response headers => %s', response.headers)
+        logger.info('Request headers => %s', mask_sensitive(response.request.headers))
+        logger.info('Response headers => %s', mask_sensitive(response.headers))
         try:
             response_data = response.json()
-            logger.info('Response => %s', response_data)
+            logger.info('Response => %s', mask_sensitive(response_data))
         except ValueError:
             logger.info('Response => %s', response.text)

@@ -156,8 +156,9 @@ jobs:
         env:
           ALLURE_VERSION: 2.44.1
 
-      # build 編號來自 executor.json。缺這個檔時 Allure 每次都寫 buildOrder: 1,
-      # 趨勢圖會把歷次結果全部疊在同一個 #1 上;用 run_number 才會遞增。
+      # 測試 job 的 allure_reporting.py 有產 executor.json,但它的編號是從本機上一份
+      # allure-report/ 推算的——該目錄被 gitignore,CI runner 上不存在,推算一律回 0、
+      # 編號永遠 1。這裡用 run_number 整個覆寫,CI 的編號才會遞增。
       # reportUrl 指向本輪的版本化子目錄——history 連結點回去才有真的舊報告,不會 404
       - name: Write executor.json
         run: |
