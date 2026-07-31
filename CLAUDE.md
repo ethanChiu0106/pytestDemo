@@ -24,6 +24,8 @@ cd ../mock-server && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 UI 測試打的是公開的 SauceDemo，不需額外服務。環境以 `--env` 切換（`qa` / `dev`），設定在 `config/secrets.yml`；`dev` 目前沒有 `urls.ui`，跑 UI 測試需用 `qa`。
 
+**Allure CLI 的版本以 `.github/workflows/tests.yml` 的 `ALLURE_VERSION` 為準**，本機要跟它一致。版本不一致時報告版面會跟 GitHub Pages 不同，且沒有任何錯誤提示。用 `allure --version` 確認，scoop 使用者執行 `scoop update allure`。
+
 ---
 
 ## 程式碼慣例
