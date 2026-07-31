@@ -1,0 +1,8 @@
+2026-07-31 19:40:59:454000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-07-31 19:40:59:454000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/login (base_request.py:176)
+2026-07-31 19:40:59:454000 [INFO] [utils.base_request] Method => POST (base_request.py:177)
+2026-07-31 19:40:59:454000 [INFO] [utils.base_request] Request json => {'account': 'QdTicWQVF1rPepmhSvVe', 'password': '***'} (base_request.py:181)
+2026-07-31 19:40:59:456000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '60', 'Content-Type': 'application/json'} (base_request.py:193)
+2026-07-31 19:40:59:456000 [INFO] [utils.base_request] Response headers => {'date': 'Fri, 31 Jul 2026 19:40:59 GMT', 'server': 'uvicorn', 'content-length': '39', 'content-type': 'application/json'} (base_request.py:194)
+2026-07-31 19:40:59:456000 [INFO] [utils.base_request] Response => {'code': 2002, 'msg': 'Account not found'} (base_request.py:197)
+2026-07-31 19:40:59:456000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
