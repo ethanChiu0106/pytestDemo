@@ -30,7 +30,8 @@ class UserProfileScenarioRequest:
     new_password: str
 
 
-@dataclass
+# repr=False：讓 dataclass 不要重新生成 repr，沿用父類遮蔽敏感欄位的版本
+@dataclass(repr=False)
 class UserProfileScenarioCase(TestCaseData[UserProfileScenarioRequest, dict[str, Expectation]]):
     """使用者個人資料場景的測試案例
 

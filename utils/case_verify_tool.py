@@ -10,12 +10,14 @@ from test_data.common.base import Expectation
 logger = logging.getLogger(__name__)
 
 
-@allure.step('驗證 test data expected value')
 def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]):
     """比對實際結果與預期結果的字典
 
     此函式只會比對 `expected_result` 中存在的鍵值對
     這允許在不同環境下，即使 API 回應的欄位不完全相同，也能進行核心欄位的驗證
+
+    Allure step 用 context manager 而非裝飾器——裝飾器會把 `actual_result`
+    (含回應裡的 token) 原文記成 step parameters，報告是公開的，不能讓它進去。
 
     Args:
         actual_result: 實際的 API 回應字典
@@ -25,19 +27,20 @@ def assert_result(actual_result: Dict[str, Any], expected_result: Dict[str, Any]
         AssertionError: 如果 `actual_result` 中缺少 `expected_result` 的任何鍵，
                         或者共同鍵的值不匹配
     """
-    # 結構驗證：確保所有預期的鍵都存在於實際結果中
-    expected_keys = set(expected_result.keys())
-    missing_keys = expected_keys - set(actual_result.keys())
+    with allure.step('驗證 test data expected value'):
+        # 結構驗證：確保所有預期的鍵都存在於實際結果中
+        expected_keys = set(expected_result.keys())
+        missing_keys = expected_keys - set(actual_result.keys())
 
-    if missing_keys:
-        error_msg = f'驗證失敗：實際結果中缺少預期的鍵 (Missing keys in actual result): {missing_keys}'
-        logger.error(error_msg)
-        assert False, error_msg
+        if missing_keys:
+            error_msg = f'驗證失敗：實際結果中缺少預期的鍵 (Missing keys in actual result): {missing_keys}'
+            logger.error(error_msg)
+            assert False, error_msg
 
-    # 內容驗證：只取預期的鍵比對，讓斷言失敗時的 diff 不被無關欄位淹沒
-    filtered_actual = {key: actual_result[key] for key in expected_keys}
+        # 內容驗證：只取預期的鍵比對，讓斷言失敗時的 diff 不被無關欄位淹沒
+        filtered_actual = {key: actual_result[key] for key in expected_keys}
 
-    assert filtered_actual == expected_result
+        assert filtered_actual == expected_result
 
 
 def _verify_value(schema: Any, path: str, value: Any):
@@ -70,7 +73,6 @@ def _verify_value(schema: Any, path: str, value: Any):
         raise TypeError(f"預期結構 (schema) 中 '{path}' 的值 '{schema}' 不是合法的型別、字典、列表、元組或 None")
 
 
-@allure.step('驗證回應的巢狀結構 (Nested Structure)')
 def assert_structure(actual_dict: dict, expected_schema: dict):
     """遞迴驗證一個字典是否符合預期的巢狀結構
 
@@ -88,14 +90,15 @@ def assert_structure(actual_dict: dict, expected_schema: dict):
         AssertionError: 如果結構或型別不匹配
         TypeError: 如果 `expected_schema` 本身的格式不合法
     """
-    assert isinstance(actual_dict, dict), f'要驗證的對象不是字典，而是 {type(actual_dict)}'
+    with allure.step('驗證回應的巢狀結構 (Nested Structure)'):
+        assert isinstance(actual_dict, dict), f'要驗證的對象不是字典，而是 {type(actual_dict)}'
 
-    expected_keys = set(expected_schema.keys())
-    actual_keys = set(actual_dict.keys())
-    assert expected_keys.issubset(actual_keys), f'回應中缺少 key(s): {expected_keys - actual_keys}'
+        expected_keys = set(expected_schema.keys())
+        actual_keys = set(actual_dict.keys())
+        assert expected_keys.issubset(actual_keys), f'回應中缺少 key(s): {expected_keys - actual_keys}'
 
-    for key, sub_schema in expected_schema.items():
-        _verify_value(sub_schema, key, actual_dict[key])
+        for key, sub_schema in expected_schema.items():
+            _verify_value(sub_schema, key, actual_dict[key])
 
 
 def verify_case_auto(actual_result: Dict[str, Any], expected: Expectation):

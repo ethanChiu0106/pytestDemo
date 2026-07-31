@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Generic, List, Optional
 
 from typing_extensions import NotRequired, TypedDict, TypeVar
+
+from utils.base_request import mask_sensitive
 
 from .enums import AllureSeverity, PytestMark
 
@@ -85,3 +87,13 @@ class TestCaseData(Generic[RequestType, ExpectedType]):
     # --- 有預設值的欄位必須在後面 ---
     severity: AllureSeverity = AllureSeverity.NORMAL
     description: str = ''
+
+    def __repr__(self) -> str:
+        """遮蔽敏感欄位的 repr
+
+        allure-pytest 會把 parametrize 的參數以 repr 原文寫進報告的 Parameters，
+        而報告發佈在公開的 GitHub Pages——repr 是 `case` 進報告的唯一途徑，遮這裡
+        就遮到了。注意：繼承本類別的 dataclass 要標 `@dataclass(repr=False)`，
+        否則裝飾器會重新生成 repr、蓋掉這個遮蔽版。
+        """
+        return f'{type(self).__name__}({mask_sensitive(asdict(self))})'

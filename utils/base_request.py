@@ -14,7 +14,17 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-SENSITIVE_KEYS = frozenset({'password', 'token', 'access_token', 'refresh_token', 'authorization', 'cookie'})
+SENSITIVE_KEYS = frozenset({'password', 'token', 'authorization', 'cookie'})
+
+
+def _is_sensitive(key: str) -> bool:
+    """判斷欄位名是否屬於敏感欄位
+
+    用子字串比對而非整鍵比對——測試資料的欄位名有 `initial_password`、
+    `new_password`、`access_token` 這類變體，整鍵比對會漏掉。
+    """
+    key = key.lower()
+    return any(word in key for word in SENSITIVE_KEYS)
 
 
 def mask_sensitive(value):
@@ -30,7 +40,7 @@ def mask_sensitive(value):
         同結構的資料，敏感欄位的值換成 '***'
     """
     if isinstance(value, Mapping):
-        return {k: '***' if k.lower() in SENSITIVE_KEYS else mask_sensitive(v) for k, v in value.items()}
+        return {k: '***' if _is_sensitive(k) else mask_sensitive(v) for k, v in value.items()}
     if isinstance(value, list):
         return [mask_sensitive(v) for v in value]
     return value
@@ -119,7 +129,6 @@ class BaseRequest:
         self.save_response_log(response)
         return normalize_response(response)
 
-    @allure.step('{method} {path}')
     def request(self, path: str, method: str, data=None, json: dict = None, **kwargs):
         """發送一個 HTTP 請求的核心方法
 
@@ -128,6 +137,9 @@ class BaseRequest:
 
         認證資訊請透過 `ApiClientProvider.with_auth()` 建立帶身分的 client 來提供，
         而非在單次呼叫時傳入——身分屬於 client，不屬於單一次請求。
+
+        Allure step 用 context manager 而非裝飾器——裝飾器會把函式引數 (含請求 body
+        的密碼) 原文記成 step parameters，報告是公開的，不能讓它進去。
 
         Args:
             path: API 的路徑
@@ -142,14 +154,15 @@ class BaseRequest:
         Raises:
             requests.RequestException: 當請求失敗時觸發
         """
-        try:
-            headers = {**self.default_headers, **(kwargs.pop('headers', None) or {})}
-            url = self.base_url + path
-            self.request_log(url, method, data=data, json=json, **kwargs)
-            return self.session.request(method, url, data=data, json=json, headers=headers, **kwargs)
-        except requests.RequestException as e:
-            logger.error(f'Request failed: {e}')
-            raise
+        with allure.step(f'{method} {path}'):
+            try:
+                headers = {**self.default_headers, **(kwargs.pop('headers', None) or {})}
+                url = self.base_url + path
+                self.request_log(url, method, data=data, json=json, **kwargs)
+                return self.session.request(method, url, data=data, json=json, headers=headers, **kwargs)
+            except requests.RequestException as e:
+                logger.error(f'Request failed: {e}')
+                raise
 
     @staticmethod
     def request_log(url: str, method: str, **kwargs):
