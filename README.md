@@ -6,7 +6,7 @@
 
 ## 專案目的
 
-此框架主要前端、後端的自動化測試：
+此框架主要用於前端、後端的自動化測試：
 *   **Web UI 測試**：整合 Playwright ，並採用 Page Object Model (POM) 設計模式。
 *   **WebSocket API 測試**：利用 `asyncio` 和 `websockets` 處理非同步通訊。
 *   **Restful API 測試**：透過 `requests` ，提供 Restful API 請求發送與回應驗證能力。
@@ -29,6 +29,7 @@
 *   **測試框架**：Pytest
 *   **環境與套件管理**：uv
 *   **開發流程輔助**：pre-commit
+*   **Lint / Format**：Ruff
 *   **Web UI 測試**：Playwright
 *   **WebSocket 客戶端**：websockets
 *   **Restful API 客戶端**：requests
@@ -91,6 +92,12 @@
 **若要直接執行這些 API 相關的測試案例** (例如執行 `testcases/api_test` 下的測試，或執行所有測試)，需**先下載並啟用該 Server**。
 
 **Server 專案連結：** [`mock-server`](<https://github.com/ethanChiu0106/mockServer>)。
+
+若不想 clone 該專案，也可直接用 CI 發佈的 image 啟動：
+
+```bash
+docker run --rm -p 8000:8000 -e SECRET_KEY=any-secret ghcr.io/ethanchiu0106/mockserver:latest
+```
 
 ---
 使用 `--env` 參數來指定要執行的測試環境。
@@ -171,10 +178,25 @@ Allure Report 效果
 *   `config/secrets.yml`: 核心設定檔，用於存放所有環境的 URL、帳號密碼及其他敏感資訊。**此檔案不應被提交到 Git**。
 *   `config/secrets.yml.template`: `secrets.yml` 的模板檔案，定義了設定檔應有的結構。
 
+## CI/CD (GitHub Actions)
+
+推送到 `main`、發 PR、每日排程（台灣時間 02:00）或手動觸發時，自動執行完整流程：
+
+1. **Lint**：`ruff check` + `ruff format --check`（鎖定 0.13.2，與本機一致）
+2. **API 測試**：以 service container 拉起 mock-server 的 image
+   （`ghcr.io/ethanchiu0106/mockserver`），不需手動架設後端
+3. **UI 測試**：獨立 job 與 API 測試並行，打公開的 SauceDemo
+4. **報告發佈**：合併兩個 job 的結果，生成含趨勢圖的 Allure 報告並發佈到
+   GitHub Pages——每輪以 run number 版本化，保留最近 20 輪
+5. **Telegram 通知**：附測試統計與報告連結，等 Pages 部署完成後才發送
+
+📊 最新報告：<https://ethanchiu0106.github.io/pytestDemo/>
+
 ## 專案結構
 
 ```
 pytest-demo/
+├── .github/workflows/  # CI/CD (lint、測試、Allure 報告發佈、Telegram 通知)
 ├── api/                # 封裝 WebSocket 和 Restful API 請求邏輯 
 ├── pages/              # 封裝 UI 測試的 Page Object Model (POM) 
 ├── config/             # 環境設定檔 (secrets.yml, secrets.yml.template)
