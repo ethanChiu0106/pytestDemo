@@ -94,17 +94,19 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      # runner 沒有瀏覽器,裝 chromium + 系統依賴;CI 無螢幕,pytest-playwright 預設 headless
+      # runner 沒有瀏覽器,裝三個引擎 + 系統依賴;CI 無螢幕,pytest-playwright 預設 headless
       - name: Install Playwright browsers
-        run: uv run playwright install chromium --with-deps
+        run: uv run playwright install --with-deps
 
       - name: Restore config/secrets.yml
         run: printf '%s' "$SECRETS_YML" > config/secrets.yml
         env:
           SECRETS_YML: ${{ secrets.SECRETS_YML }}
 
+      # --browser 可重複:每個測試以三個引擎各跑一次(chromium=Chrome/Edge,
+      # firefox=Gecko, webkit=Safari 引擎)
       - name: Run UI tests
-        run: uv run pytest --env qa testcases/ui_test
+        run: uv run pytest --env qa testcases/ui_test --browser chromium --browser firefox --browser webkit
 
       - name: Upload allure-results
         if: always()

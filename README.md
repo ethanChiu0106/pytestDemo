@@ -185,7 +185,7 @@ Allure Report 效果
 1. **Lint**：`ruff check` + `ruff format --check`（鎖定 0.13.2，與本機一致）
 2. **API 測試**：以 service container 拉起 mock-server 的 image
    （`ghcr.io/ethanchiu0106/mockserver`），不需手動架設後端
-3. **UI 測試**：獨立 job 與 API 測試並行，打公開的 SauceDemo
+3. **UI 測試**：獨立 job 與 API 測試並行，打公開的 SauceDemo，以 chromium / firefox / webkit 三瀏覽器各跑一輪（本機同樣可用重複的 `--browser` 參數選擇瀏覽器，預設 chromium）
 4. **報告發佈**：合併兩個 job 的結果，生成含趨勢圖的 Allure 報告並發佈到
    GitHub Pages——每輪以 run number 版本化，保留最近 20 輪
 5. **Telegram 通知**：附測試統計與報告連結，等 Pages 部署完成後才發送
