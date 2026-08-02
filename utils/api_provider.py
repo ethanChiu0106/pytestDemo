@@ -1,11 +1,9 @@
-from typing import TYPE_CHECKING, Type, TypeVar
+from typing import Type, TypeVar
 
 import requests
 
+from api.service_names import Service
 from utils.config_loader import Config
-
-if TYPE_CHECKING:
-    from api.service_names import Service
 
 T = TypeVar('T')
 
@@ -57,7 +55,7 @@ class ApiClientProvider:
         """內部使用的 client 建立方法。"""
         return api_class(base_url=base_url, session=self._session, default_headers=self._default_headers)
 
-    def get(self, api_class: Type[T], service: 'Service' = None) -> T:
+    def get(self, api_class: Type[T], service: Service = None) -> T:
         """獲取一個設定好的 API Client 物件。
 
         服務的判定順序為: `service` 參數 > API class 的 `service` 屬性。

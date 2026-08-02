@@ -2,15 +2,13 @@
 
 import logging
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import allure
 import requests
 
+from api.service_names import Service
 from utils.response import normalize_response
-
-if TYPE_CHECKING:
-    from api.service_names import Service
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +54,7 @@ class BaseRequest:
     """
 
     # 由子類別指定，`ApiClientProvider` 依此決定要使用哪個 base URL
-    service: ClassVar['Service']
+    service: ClassVar[Service]
 
     def __init__(self, base_url, session=None, default_headers: dict = None):
         """初始化 BaseRequest
