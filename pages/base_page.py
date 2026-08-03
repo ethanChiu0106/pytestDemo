@@ -2,13 +2,16 @@ import logging
 import re
 
 import allure
-from playwright.sync_api import Locator, Page, expect
+from playwright.sync_api import Page, expect
 
 logger = logging.getLogger(__name__)
 
 
 class BasePage:
     """所有頁面物件的基礎類別，封裝了 Playwright 的常用操作。"""
+
+    URL_REGEX: str
+    """本頁網址的正規表示式，供 `expect_loaded` 使用；沒有單一網址的頁面不需宣告。"""
 
     def __init__(self, page: Page):
         """初始化 BasePage。
@@ -32,32 +35,10 @@ class BasePage:
             self.page.goto(path, wait_until=wait_until)
             logger.info('導覽至 URL: %s', self.page.url)
 
-    def assert_text(self, locator: Locator, expected_text: str, message: str = None):
-        """驗證指定 Locator 的文字內容是否符合預期。"""
-        # 預設訊息不帶 locator，它字串化後是整個 frame 與 selector 的內部表示
-        step_message = message if message else f"驗證文字應為 '{expected_text}'"
-        with allure.step(step_message):
-            expect(locator).to_have_text(expected_text)
+    def expect_loaded(self):
+        """驗證瀏覽器停留在本頁。
 
-    def assert_url(self, url_regex: str, message: str = None):
-        """驗證當前 URL 是否符合指定的正規表示式。"""
-        step_message = message if message else f"驗證 URL 符合: '{url_regex}'"
-        with allure.step(step_message):
-            expect(self.page).to_have_url(re.compile(url_regex))
-
-    def assert_element_is_visible(self, locator: Locator, message: str = None):
-        """驗證指定的元素是否可見。"""
-        step_message = message if message else '驗證元素可見'
-        with allure.step(step_message):
-            expect(locator).to_be_visible()
-
-    def assert_element_is_not_visible(self, locator: Locator, message: str = None):
-        """驗證指定的元素是否不可見。"""
-        step_message = message if message else '驗證元素不可見'
-        with allure.step(step_message):
-            expect(locator).not_to_be_visible()
-
-    def assert_value(self, actual_value, expected_value, message: str):
-        """驗證一個實際值是否等於預期值。"""
-        with allure.step(message):
-            assert actual_value == expected_value, f'{message}: 預期為 {expected_value}, 實際為 {actual_value}'
+        斷的是 `self.URL_REGEX`，所以只能驗證自己那一頁，不會拿 A 頁物件去斷 B 頁網址。
+        """
+        with allure.step(f'驗證停留在 {type(self).__name__}'):
+            expect(self.page).to_have_url(re.compile(self.URL_REGEX))

@@ -1,8 +1,9 @@
 import logging
+from collections.abc import Iterator
 
 import allure
 import pytest
-from playwright.sync_api import Browser, Playwright
+from playwright.sync_api import Browser, Page, Playwright
 
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
@@ -61,13 +62,32 @@ def standard_user_state(browser: Browser, base_url: str, tmp_path_factory: pytes
     """
     state_path = tmp_path_factory.mktemp('pw_state') / 'standard_user.json'
     context = browser.new_context(base_url=base_url)
-    login_page = LoginPage(context.new_page())
-    login_page.goto()
     default_user = get_config().user('ui_default_user')
+    page = context.new_page()
+    login_page = LoginPage(page)
+    login_page.goto()
     login_page.fill_username(default_user.account)
     login_page.fill_password(default_user.password)
     login_page.click_login_button()
-    login_page.assert_url(InventoryPage.URL_REGEX)
+    InventoryPage(page).expect_loaded()
     context.storage_state(path=str(state_path))
     context.close()
     return str(state_path)
+
+
+@pytest.fixture
+def logged_in_page(browser: Browser, base_url: str, standard_user_state: str) -> Iterator[Page]:
+    """提供已載入登入態的 page，供需要跳過登入的測試使用
+
+    Args:
+        browser: Playwright 的 Browser 物件。
+        base_url: UI 測試的 base URL。
+        standard_user_state: storage_state 檔案路徑。
+
+    Yields:
+        已載入登入態的 Page 物件。
+    """
+    context = browser.new_context(storage_state=standard_user_state, base_url=base_url)
+    page = context.new_page()
+    yield page
+    context.close()

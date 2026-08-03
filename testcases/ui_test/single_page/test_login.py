@@ -2,7 +2,7 @@ import logging
 
 import allure
 import pytest
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
@@ -23,9 +23,8 @@ class TestLoginPage:
 
         if case.expected['success']:
             with allure.step('驗證登入成功'):
-                login_page.assert_url(InventoryPage.URL_REGEX)
-                login_page.assert_element_is_not_visible(login_page.error_msg, '驗證沒有出現錯誤訊息')
+                InventoryPage(page).expect_loaded()
+                expect(login_page.error_msg).to_be_hidden()
         else:
             with allure.step(f'驗證錯誤訊息: {case.expected["error_message"]}'):
-                login_page.assert_element_is_visible(login_page.error_msg, '驗證錯誤訊息有出現')
-                login_page.assert_text(login_page.error_msg, case.expected['error_message'])
+                expect(login_page.error_msg).to_have_text(case.expected['error_message'])
