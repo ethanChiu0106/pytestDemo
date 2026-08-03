@@ -43,12 +43,12 @@ UI 測試打的是公開的 SauceDemo，不需額外服務。環境以 `--env` �
 
 三個 fixture 的分工是**身分**：
 
-| 需求 | fixture |
-|---|---|
-| 測登入／註冊本身（**不該**帶 token） | `auth_api`（匿名 `AuthAPI`） |
-| 呼叫需要授權的 API | `authed_api`（已認證的 Provider） |
-| token 字串本身 | `access_token` |
-| 匿名的其他 API，或流程中自行切換身分 | `api_provider`（匿名 Provider） |
+| 需求                                       | fixture                             |
+| ------------------------------------------ | ----------------------------------- |
+| 測登入／註冊本身（**不該**帶 token） | `auth_api`（匿名 `AuthAPI`）    |
+| 呼叫需要授權的 API                         | `authed_api`（已認證的 Provider） |
+| token 字串本身                             | `access_token`                    |
+| 匿名的其他 API，或流程中自行切換身分       | `api_provider`（匿名 Provider）   |
 
 ```python
 def test_get_item(self, authed_api: ApiClientProvider, case: GetItemCase):
@@ -119,12 +119,12 @@ get_item.negative(id='get_item_not_found', title='獲取不存在的物品', req
 
 `expected` 的形狀依消費者而不同，**不要試圖統一**。四種形狀各有型別，由 `TestCaseData` 的第二個型別參數綁定，全部定義在 `test_data/common/base.py`：
 
-| 場景 | 型別 | 別名寫法 |
-|---|---|---|
-| API 單步驟 | `Expectation`（`result` 必填、`schema` 選填） | `TestCaseData[XxxRequest]`（預設值，免寫） |
-| API 情境 | `dict[str, Expectation]`，以步驟名為鍵 | `TestCaseData[XxxRequest, dict[str, Expectation]]` |
-| UI 登入類 | `UILoginExpectation` | `TestCaseData[XxxRequest, UILoginExpectation]` |
-| UI 流程類 | `UIPurchaseExpectation` | `TestCaseData[XxxRequest, UIPurchaseExpectation]` |
+| 場景       | 型別                                                | 別名寫法                                             |
+| ---------- | --------------------------------------------------- | ---------------------------------------------------- |
+| API 單步驟 | `Expectation`（`result` 必填、`schema` 選填） | `TestCaseData[XxxRequest]`（預設值，免寫）         |
+| API 情境   | `dict[str, Expectation]`，以步驟名為鍵            | `TestCaseData[XxxRequest, dict[str, Expectation]]` |
+| UI 登入類  | `UILoginExpectation`                              | `TestCaseData[XxxRequest, UILoginExpectation]`     |
+| UI 流程類  | `UIPurchaseExpectation`                           | `TestCaseData[XxxRequest, UIPurchaseExpectation]`  |
 
 UI **不經過 `verify_case_auto`**（UI 是流程中多點斷言，沒有單一回應可比對）。把 UI 形狀的 `expected` 傳進 API 的 builder 或 `verify_case_auto`，型別檢查會擋下來，不必等到執行期。
 
@@ -147,10 +147,51 @@ expected={'result': HTTP.Common.SUCCESS, 'schema': HTTP.Auth.Schemas.LOGIN_SUCCE
 
 放哪裡依「這是什麼東西」決定，不看引用次數：
 
-| 種類 | 位置 |
-|---|---|
-| 錯誤碼、回應 schema | `expectations.py`，即使只用一次。這是被測系統的契約 |
-| 頁面網址 regex、選擇器 | 各 Page Object 的類別屬性，例如 `CheckoutPage.STEP_ONE_URL_REGEX` |
-| 只有單一資料檔用得到的預期值 | 該資料檔內，例如 `purchase.py` 的 `details` |
+| 種類                         | 位置                                                               |
+| ---------------------------- | ------------------------------------------------------------------ |
+| 錯誤碼、回應 schema          | `expectations.py`，即使只用一次。這是被測系統的契約              |
+| 頁面網址 regex、選擇器       | 各 Page Object 的類別屬性，例如`CheckoutPage.STEP_ONE_URL_REGEX` |
+| 只有單一資料檔用得到的預期值 | 該資料檔內，例如`purchase.py` 的 `details`                     |
 
 **不要在 `expectations.py` 放 URL regex。** 那是頁面位置，消費者是測試檔，放這裡會逼測試為了一個網址去 import `test_data`。
+
+---
+
+## Page Object 的邊界（UI 測試）
+
+判準是**變動理由**：網站改版要改的放 `pages/`，測試需求改變要改的放 `testcases/` 或 `test_data/`。
+
+| 放哪           | 回答什麼問題           | 例子                                                                     |
+| -------------- | ---------------------- | ------------------------------------------------------------------------ |
+| `pages/`     | 這頁長怎樣、怎麼操作   | locator、`fill_checkout_info()`、`get_tax()`、`expect_summary()` |
+| `testcases/` | 這次要做哪些步驟、順序 | 流程串接、`if case.expected['success']`、parametrize、一次性單點斷言    |
+| `test_data/` | 值是多少               | `'9.99'`、`'Sauce Labs Bike Light'`                                  |
+
+兩條硬規則：
+
+1. **`pages/` 不 import `test_data/`，也不 import `pytest`。** 一旦 page 需要知道 case 長怎樣，職責就穿幫了。`checkout_page.py` 的金額比對用 `math.isclose` 而非 `pytest.approx`，就是為了守這條。
+2. **page 方法裡不出現字面預期值。** 預期值一律由參數傳入。
+
+### 斷言放哪
+
+**不要寫通用的 assert 包裝。** `assert_text(locator, text)` 這種方法沒有任何頁面知識，只是 `expect(locator).to_have_text(text)` 換個名字，代價是 traceback 指到包裝層、`timeout` 等參數被鎖死、而且掛在 `BasePage` 上會讓 `login_page.assert_url(CartPage.URL_REGEX)` 變成合法寫法。單點斷言在測試裡直接用 Playwright 的 `expect()`。
+
+**要封裝的是「這頁應該長怎樣」，不是「怎麼斷言」。** 抽成 page 方法前跑這四個檢查，全過才抽：
+
+1. **內容分得開嗎**——locator 引用與字串解析（頁面知識）進 page，值留在 case。
+2. **變動理由一致嗎**——那幾個欄位會因為同一次改版一起變。
+3. **能被誤用嗎**——只碰 `self` 的 locator，所以 `login_page.expect_summary()` 寫不出來。
+4. **參數化成本低嗎**——傳一包 `details` 就夠。**參數愈多，抽象愈可疑**；需要 `check_payment=True` 這類 flag 才能覆蓋各案例，代表它們沒那麼綁在一起，該拆小而不是加參數。
+
+最後做命名測試：名字要說結果、不說做法。`expect_summary` 過關，`assert_four_texts_and_three_numbers` 不過關。
+
+**「只用一次」不是不抽的理由。** `CheckoutPage.expect_summary()` 目前也只有一個 case 用，抽的理由是封裝頁面知識，不是 DRY。
+
+`BasePage.expect_loaded()` 斷的是 `self.URL_REGEX`，所以只能驗證自己那一頁。`CheckoutPage` 有三個網址、不宣告 `URL_REGEX`，誤呼叫會 AttributeError，這是刻意的——立刻炸掉比默默斷錯頁面好。
+
+### 兩個常見踩空
+
+- **過度往 page 塞流程**：看到 `login_page.login_and_go_to_cart()` 要警覺，跨頁流程屬於測試。例外是前置條件，例如 `standard_user_state` fixture，目的是跳過不被測的步驟。
+- **過度往 test 塞細節**：測試裡出現 `page.get_by_test_id(...)` 或 `.replace('Tax: $', '')`，代表頁面知識漏出來了。
+
+拿不定主意時問一句：**這段程式碼想描述的是網站，還是這個案例？**
