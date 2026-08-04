@@ -1,9 +1,9 @@
 import logging
-from collections.abc import Iterator
 
 import allure
 import pytest
 from playwright.sync_api import Browser, Page, Playwright
+from pytest_playwright import CreateContextCallback
 
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
@@ -76,18 +76,18 @@ def standard_user_state(browser: Browser, base_url: str, tmp_path_factory: pytes
 
 
 @pytest.fixture
-def logged_in_page(browser: Browser, base_url: str, standard_user_state: str) -> Iterator[Page]:
+def logged_in_page(new_context: CreateContextCallback, standard_user_state: str) -> Page:
     """提供已載入登入態的 page，供需要跳過登入的測試使用
 
+    用 pytest-playwright 的 `new_context` 工廠而非 `browser.new_context()`：自己開的
+    context 不在它的 artifacts recorder 管轄內，trace / video / screenshot 會全部
+    靜默不產生。工廠版本另外會併入 `browser_context_args`（含 base_url）並自動關閉。
+
     Args:
-        browser: Playwright 的 Browser 物件。
-        base_url: UI 測試的 base URL。
+        new_context: pytest-playwright 的 browser context 工廠。
         standard_user_state: storage_state 檔案路徑。
 
-    Yields:
+    Returns:
         已載入登入態的 Page 物件。
     """
-    context = browser.new_context(storage_state=standard_user_state, base_url=base_url)
-    page = context.new_page()
-    yield page
-    context.close()
+    return new_context(storage_state=standard_user_state).new_page()

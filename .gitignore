@@ -196,6 +196,7 @@ results/
 allure_results/
 allure-results/
 allure-report/
+test-results/
 environment.properties
 env.ini
 .gemini/

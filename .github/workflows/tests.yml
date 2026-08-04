@@ -116,6 +116,17 @@ jobs:
           path: allure-results
           retention-days: 14
 
+      # pytest.ini 的 retain-on-failure 只在失敗時留產物,所以這步也只在失敗時跑。
+      # trace.zip 用 playwright show-trace 開,可逐格重播 DOM/network/console——
+      # CI 沒有畫面,這是唯一能還原現場的證據
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results
+          retention-days: 14
+
   # CD 概念示範:把 Allure 報告發佈到 GitHub Pages(報告即部署產物)
   publish-report:
     needs: [api-tests, ui-tests]
