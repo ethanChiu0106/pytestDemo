@@ -1,5 +1,3 @@
-import logging
-
 import allure
 import pytest
 from playwright.sync_api import Page, expect
@@ -9,8 +7,6 @@ from pages.checkout_page import CheckoutPage
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 from test_data.ui_test_data.scenario.purchase import UIPurchaseCase, generate_ui_purchase_cases
-
-logger = logging.getLogger(__name__)
 
 
 class TestProductPurchase:

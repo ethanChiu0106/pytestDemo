@@ -1,5 +1,3 @@
-import logging
-
 import allure
 import pytest
 from playwright.sync_api import Page, expect
@@ -7,8 +5,6 @@ from playwright.sync_api import Page, expect
 from pages.inventory_page import InventoryPage
 from pages.login_page import LoginPage
 from test_data.ui_test_data.single.login import UILoginCase, generate_ui_login_cases
-
-logger = logging.getLogger(__name__)
 
 
 class TestLoginPage:

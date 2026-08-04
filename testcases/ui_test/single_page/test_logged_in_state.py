@@ -1,11 +1,7 @@
-import logging
-
 import pytest
 from playwright.sync_api import Page, expect
 
 from pages.inventory_page import InventoryPage
-
-logger = logging.getLogger(__name__)
 
 
 class TestLoggedInState:
