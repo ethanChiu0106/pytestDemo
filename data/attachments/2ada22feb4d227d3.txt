@@ -1,0 +1,8 @@
+2026-08-15 18:35:49:692000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-08-15 18:35:49:693000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/login (base_request.py:174)
+2026-08-15 18:35:49:693000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
+2026-08-15 18:35:49:693000 [INFO] [utils.base_request] Request json => {'account': 'test1', 'password': '***'} (base_request.py:179)
+2026-08-15 18:35:49:953000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '43', 'Content-Type': 'application/json'} (base_request.py:191)
+2026-08-15 18:35:49:953000 [INFO] [utils.base_request] Response headers => {'date': 'Sat, 15 Aug 2026 18:35:48 GMT', 'server': 'uvicorn', 'content-length': '379', 'content-type': 'application/json'} (base_request.py:192)
+2026-08-15 18:35:49:953000 [INFO] [utils.base_request] Response => {'code': 0, 'data': {'access_token': '***', 'ws_url': 'ws://localhost:8000/ws/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0MSIsImV4cCI6MTc4NjgyMDc0OX0.cMGDvgKOAeDXEtIsKXv6LZDaGHI3wXZy__g-lDWSn-M', 'player_info': {'username': '邱美惠7QE', 'telephone': None}}} (base_request.py:195)
+2026-08-15 18:35:49:953000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
