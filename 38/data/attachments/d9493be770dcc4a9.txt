@@ -1,0 +1,3 @@
+2026-08-16 18:35:47:864000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-08-16 18:35:48:071000 [INFO] [pages.base_page] 導覽至 URL: https://www.saucedemo.com/ (base_page.py:36)
+2026-08-16 18:35:48:188000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
