@@ -35,6 +35,7 @@ class AsyncBaseWS:
         self.listener_task: asyncio.Task | None = None
         self.message_queue = asyncio.Queue()
         self.player_init_info = None
+        self.last_skipped_messages: list[dict] = []
 
     @allure.step('WS connect')
     async def __aenter__(self) -> 'AsyncBaseWS':
@@ -154,10 +155,16 @@ class AsyncBaseWS:
 
         Returns:
             包含 API 回應結果的 dict, 若超時則回傳錯誤訊息 dict
+
+        Note:
+            等待期間收到的非預期 op_code 訊息，會存進 `self.last_skipped_messages`
+            供測試事後查證是良性的時序問題還是真的收到錯誤的 op_code；每次呼叫開頭會清空。
         """
         if not self._websocket:
             logger.error('WebSocket 尚未連線')
             return {'status_code': 500, 'message': 'WebSocket not connected'}
+
+        self.last_skipped_messages = []
 
         dict_data = {
             'op_code': op_code,
@@ -176,6 +183,7 @@ class AsyncBaseWS:
                         return result
                     else:
                         logger.warning('等待 op_code %s 時收到非預期訊息: %s', expected_op_code, response_data)
+                        self.last_skipped_messages.append(response_data)
 
         except TimeoutError:
             logger.error('超時：在 %s 秒內未收到期望的 op_code %s', timeout, expected_op_code)
