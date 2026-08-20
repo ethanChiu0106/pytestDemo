@@ -1,0 +1,8 @@
+2026-08-19 18:40:34:249000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-08-19 18:40:34:250000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/register (base_request.py:174)
+2026-08-19 18:40:34:250000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
+2026-08-19 18:40:34:250000 [INFO] [utils.base_request] Request json => {'account': 'formatTestUser', 'password': '***'} (base_request.py:179)
+2026-08-19 18:40:34:252000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '51', 'Content-Type': 'application/json'} (base_request.py:191)
+2026-08-19 18:40:34:252000 [INFO] [utils.base_request] Response headers => {'date': 'Wed, 19 Aug 2026 18:40:33 GMT', 'server': 'uvicorn', 'content-length': '108', 'content-type': 'application/json'} (base_request.py:192)
+2026-08-19 18:40:34:252000 [INFO] [utils.base_request] Response => {'code': 2003, 'msg': 'Invalid password format. Must be 7-20 characters and contain both letters and numbers.'} (base_request.py:195)
+2026-08-19 18:40:34:252000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)

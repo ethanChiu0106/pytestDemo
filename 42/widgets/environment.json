@@ -1,0 +1,1 @@
+[{"values":["Linux"],"name":"os"},{"values":["3.11.16"],"name":"python_version"},{"values":["qa, front=http://localhost:8000, ui=https://www.saucedemo.com/"],"name":"environment"}]
