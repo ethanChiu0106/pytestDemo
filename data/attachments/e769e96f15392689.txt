@@ -1,8 +1,0 @@
-2026-08-19 18:40:33:440000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
-2026-08-19 18:40:33:440000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/register (base_request.py:174)
-2026-08-19 18:40:33:440000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
-2026-08-19 18:40:33:440000 [INFO] [utils.base_request] Request json => {'account': '7bNNpt', 'password': '***'} (base_request.py:179)
-2026-08-19 18:40:33:701000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '47', 'Content-Type': 'application/json'} (base_request.py:191)
-2026-08-19 18:40:33:701000 [INFO] [utils.base_request] Response headers => {'date': 'Wed, 19 Aug 2026 18:40:32 GMT', 'server': 'uvicorn', 'content-length': '88', 'content-type': 'application/json'} (base_request.py:192)
-2026-08-19 18:40:33:701000 [INFO] [utils.base_request] Response => {'code': 0, 'data': {'account': '7bNNpt', 'username': '葉雅筑UUg', 'telephone': None, 'id': 3}} (base_request.py:195)
-2026-08-19 18:40:33:702000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
