@@ -1,8 +1,0 @@
-2026-08-11 19:07:18:707000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
-2026-08-11 19:07:18:707000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/register (base_request.py:174)
-2026-08-11 19:07:18:707000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
-2026-08-11 19:07:18:707000 [INFO] [utils.base_request] Request json => {'account': 's5JXZgfTAwnWWa06N3', 'password': '***'} (base_request.py:179)
-2026-08-11 19:07:18:968000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '66', 'Content-Type': 'application/json'} (base_request.py:191)
-2026-08-11 19:07:18:968000 [INFO] [utils.base_request] Response headers => {'date': 'Tue, 11 Aug 2026 19:07:18 GMT', 'server': 'uvicorn', 'content-length': '100', 'content-type': 'application/json'} (base_request.py:192)
-2026-08-11 19:07:18:969000 [INFO] [utils.base_request] Response => {'code': 0, 'data': {'account': 's5JXZgfTAwnWWa06N3', 'username': '曹俊佑Wwf', 'telephone': None, 'id': 3}} (base_request.py:195)
-2026-08-11 19:07:18:969000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
