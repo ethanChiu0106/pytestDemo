@@ -1,0 +1,8 @@
+2026-09-03 20:45:48:908000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-09-03 20:45:48:909000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/register (base_request.py:174)
+2026-09-03 20:45:48:909000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
+2026-09-03 20:45:48:909000 [INFO] [utils.base_request] Request json => {'account': 'aaaaaaaaaaaaaaaaaaaaa', 'password': '***'} (base_request.py:179)
+2026-09-03 20:45:48:911000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '60', 'Content-Type': 'application/json'} (base_request.py:191)
+2026-09-03 20:45:48:911000 [INFO] [utils.base_request] Response headers => {'date': 'Thu, 03 Sep 2026 20:45:47 GMT', 'server': 'uvicorn', 'content-length': '83', 'content-type': 'application/json'} (base_request.py:192)
+2026-09-03 20:45:48:911000 [INFO] [utils.base_request] Response => {'code': 2001, 'msg': 'Invalid account format. Must be 5-20 alphanumeric characters.'} (base_request.py:195)
+2026-09-03 20:45:48:912000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
