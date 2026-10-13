@@ -1,8 +1,0 @@
-2026-10-13 00:22:50:891000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
-2026-10-13 00:22:50:891000 [INFO] [utils.base_request] API URL => http://localhost:8000/auth/register (base_request.py:174)
-2026-10-13 00:22:50:891000 [INFO] [utils.base_request] Method => POST (base_request.py:175)
-2026-10-13 00:22:50:891000 [INFO] [utils.base_request] Request json => {'account': '7SAc8', 'password': '***'} (base_request.py:179)
-2026-10-13 00:22:51:153000 [INFO] [utils.base_request] Request headers => {'User-Agent': 'python-requests/2.32.5', 'Accept-Encoding': 'gzip, deflate', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '43', 'Content-Type': 'application/json'} (base_request.py:191)
-2026-10-13 00:22:51:153000 [INFO] [utils.base_request] Response headers => {'date': 'Tue, 13 Oct 2026 00:22:50 GMT', 'server': 'uvicorn', 'content-length': '87', 'content-type': 'application/json'} (base_request.py:192)
-2026-10-13 00:22:51:153000 [INFO] [utils.base_request] Response => {'code': 0, 'data': {'account': '7SAc8', 'username': '唐雅惠GMx', 'telephone': None, 'id': 4}} (base_request.py:195)
-2026-10-13 00:22:51:154000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
