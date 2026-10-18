@@ -1,1 +1,1 @@
-{"reportName":"pytestDemo Allure Report","testRuns":[],"statistic":{"failed":0,"broken":0,"skipped":0,"passed":63,"unknown":0,"total":63},"time":{"start":1792268475685,"stop":1792268539337,"duration":63652,"minDuration":1,"maxDuration":1897,"sumDuration":15488}}
+{"reportName":"pytestDemo Allure Report","testRuns":[],"statistic":{"failed":0,"broken":0,"skipped":0,"passed":63,"unknown":0,"total":63},"time":{"start":1792354890499,"stop":1792354957357,"duration":66858,"minDuration":1,"maxDuration":1867,"sumDuration":15090}}
