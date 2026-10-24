@@ -1,0 +1,4 @@
+2026-10-24 20:29:46:836000 [INFO] [pages.base_page] 導覽至 URL: https://www.saucedemo.com/ (base_page.py:36)
+2026-10-24 20:29:47:434000 [INFO] [conftest] *************** 開始執行測項 *************** (conftest.py:65)
+2026-10-24 20:29:47:493000 [INFO] [pages.base_page] 導覽至 URL: https://www.saucedemo.com/inventory.html (base_page.py:36)
+2026-10-24 20:29:47:822000 [INFO] [conftest] *************** 結束執行測項 *************** (conftest.py:67)
